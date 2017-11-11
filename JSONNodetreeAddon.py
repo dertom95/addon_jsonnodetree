@@ -11,10 +11,21 @@ bl_info = {
     }
 
 
+
+import sys
 import bpy
 import JSONNodetree 
 from bpy.types import Operator
 from bpy.app.handlers import persistent
+
+import os
+path = os.path.dirname(os.path.realpath(__file__))
+print("__##current_path:"+path)
+sys.path.insert(0, path)
+import rx
+import rxUtils
+
+rxUtils.addDisposable(rx.Observable.interval(1000).subscribe(lambda value: print("timer:"+str(value)+"/"+str(len(rxUtils.rxData.disposeables)))))
 
 class NodeTreeCustomData(bpy.types.PropertyGroup):
     usageType = bpy.props.EnumProperty(items=[
@@ -106,6 +117,7 @@ classes = [
 ]
 
 def register():
+    #rxUtils.disposeAll()
     try:
         unregister()
     except:
@@ -123,6 +135,7 @@ def unregister():
     for clazz in classes:
         bpy.utils.unregister_class(clazz)
 
+    rxUtils.disposeAll()
 
 if __name__ == "__main__":
     register()
