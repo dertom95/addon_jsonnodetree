@@ -2,7 +2,7 @@ import json
 import bpy
 import sys 
 from bpy.types import NodeTree, Node, NodeSocket
-
+from JSONNodetreeCustom import CustomMethod 
 
 class DefaultCollection(bpy.types.PropertyGroup):
     name = bpy.props.StringProperty(default="")
@@ -11,6 +11,8 @@ class DefaultCollection(bpy.types.PropertyGroup):
 classes = []
 node_categories = []
 
+def getConfig():
+    return bpy.data.worlds[0].jsonNodes
 
 # Implementation of custom nodes from Python
 def loadJSON(filename):
@@ -20,6 +22,9 @@ def loadJSON(filename):
     print("File:"+str(result))
     return jsonResult
 
+
+def feedback(output,type=""):
+    print("Feedback: %s" % output)
 
 class MyCustomSocket(NodeSocket):
     # Description string
@@ -60,9 +65,6 @@ import nodeitems_utils
 from nodeitems_utils import NodeCategory, NodeItem
 
 
-
-
-
 def createNodeTree(data):
     
     categoryMap={}
@@ -91,6 +93,31 @@ def createNodeTree(data):
         bl_label = data["name"]
         # Icon identifier
         bl_icon = data.get("icon",'NODETREE')
+        
+        @classmethod
+        def get_from_context(cls, context):
+            current_object = context.object
+            space_data = context.space_data
+            
+            show_nodetree = space_data.node_tree
+            
+            config = getConfig()
+            
+            # automatically select nodetree of the current object?
+            if current_object.nodetreeName!="" and config.autoSelectObjectNodetree == True:
+               # check if the corresponding nodetree acutally exists
+               if current_object.nodetreeName in bpy.data.node_groups:
+                   # node tree is known
+                   show_nodetree = bpy.data.node_groups[current_object.nodetreeName]
+                   feedback("found nodetree: %s" % current_object.nodetreeName) 
+               else:
+                   # inconsistend data. a nodetree is referenced that is not known
+                   feedback("Unknown nodetree(%s) assigned to object %s" % (current_object.nodetreeName,current_object.name))
+            
+            return show_nodetree,show_nodetree,current_object
+            
+            
+            
 
 
     # Mix-in class for all custom nodes in this tree type.
@@ -137,14 +164,23 @@ def createNodeTree(data):
                 for insock in data.get("inputsockets",[]):
                     name = insock.get("name","noname")
                     type = insock.get("type","float")
+                    defaultValue = insock.get("default",None)
+
                     btype = jsontype2NodeType(type)
-                    self.inputs.new(btype,name)
+                    newsocket = self.inputs.new(btype,name)
+                    if defaultValue:
+                        newsocket.default_value=defaultValue
+                    
 
                 for outsock in data.get("outputsockets",[]):
                     name = outsock.get("name","noname")
                     type = outsock.get("type","float")
+                    defaultValue = outsock.get("default",None)
+
                     btype = jsontype2NodeType(type)
-                    self.outputs.new(btype,name)
+                    newsocket = self.outputs.new(btype,name)
+                    if defaultValue:
+                        newsocket.default_value=defaultValue
                     
                     
             # Copy function to initialize a copied node from an existing one.
@@ -160,7 +196,13 @@ def createNodeTree(data):
                 layout.label("Node settings")
 
                 for propName in self.propNames:
-                    layout.prop(self,propName) 
+                    try:
+                        # override? CustomMethod.[NodeName]_[PropName]
+                        #print("TRYING: CustomMethod.UI_"+data["id"]+"_"+propName+"(self,context,layout)")
+                        exec("CustomMethod.UI_"+data["id"]+"_"+propName+"(self,context,layout,propName)")
+                    except:
+                        # standard view
+                        layout.prop(self,propName) 
 
             # Detail buttons in the sidebar.
             # If this function is not defined, the draw_buttons function is used instead
@@ -178,6 +220,8 @@ def createNodeTree(data):
         def createProperty(prop):
             name = prop["name"];
             type = prop["type"];
+            label = prop.get("label",name)
+            description = prop.get("description",name)
             
             InnerCustomNode.propNames.append(name);
 
@@ -185,32 +229,51 @@ def createNodeTree(data):
             
             if type=="float":
                default = prop.get("default",0.0);
-               exec("InnerCustomNode.%s=bpy.props.FloatProperty(default=%i)" % ( name,default ))
+               exec("InnerCustomNode.%s=bpy.props.FloatProperty(name='%s',default=%s,description='%s')" % ( name,label,default,description ))
             elif type=="string":
                default = prop.get("default","");
-               exec("InnerCustomNode.%s=bpy.props.StringProperty(default='%s')" % ( name,default ))
+               exec("InnerCustomNode.%s=bpy.props.StringProperty(name='%s',default='%s',description='%s')" % ( name,label,default,description ))
             elif type=="bool":
-               default = prop.get("default",False);
-               exec("InnerCustomNode.%s=bpy.props.BoolProperty(default=%s)" % ( name,default ))
+               default = prop.get("default","False")=="true" or "True";
+               exec("InnerCustomNode.%s=bpy.props.BoolProperty(name='%s',default=%s,description='%s')" % ( name,label,default,description ))
             elif type=="int":
+               print("INT")
                default = prop.get("default",0);
-               exec("InnerCustomNode.%s=bpy.props.FloatProperty(default=%i)" % ( name,default ))
+               exec("InnerCustomNode.%s=bpy.props.IntProperty(name='%s',default=%s,description='%s')" % ( name,label,default,description ))
+            elif type=="vector2":
+               default = eval(prop.get("default",(0.0,0.0)));
+               exec("InnerCustomNode.%s=bpy.props.FloatVectorProperty(name='%s',default=%s,size=2,description='%s')" % ( name,label,default,description ))
+            elif type=="vector3":
+               default = eval(prop.get("default",(0.0,0.0,0.0)));
+               exec("InnerCustomNode.%s=bpy.props.FloatVectorProperty(name='%s',default=%s,size=3,description='%s')" % ( name,label,default,description ))
+            elif type=="vector4":
+               default = eval(prop.get("default",(0.0,0.0,0.0,0.0)));
+               exec("InnerCustomNode.%s=bpy.props.FloatVectorProperty(name='%s',default=%s,size=4,description='%s')" % ( name,label,default,description ))
+            elif type=="color":
+               default = eval(prop.get("default",(1.0,1.0,1.0,1.0)));
+               exec("InnerCustomNode.%s=bpy.props.FloatVectorProperty(name='%s',default=%s,size=4,subtype='COLOR',description='%s',min=0.0,max=1.0 )" % ( name,label,default,description))
             elif type=="collection":
                default = prop.get("default",0.0);
-               exec("InnerCustomNode.%s=bpy.props.CollectionProperty(type=DefaultCollection)" % ( name,default ))
+               exec("InnerCustomNode.%s=bpy.props.CollectionProperty(type=DefaultCollection,description='%s')" % ( name ))
             elif type=="enum":
-               default = prop.get("default",None);
+               default = eval(prop.get("default",0));               
                elements = []
                count=0
+               defaultID = None
                for elem in prop["elements"]:
-                   id = elem["id"] or ("%s-%i" % (name,count))
-                   ename = elem["name"] or ("%s-%i" % (name,count))
-                   descr = elem["description"] or ""
+                   id = elem.get("id",("%s-%i" % (name,count)))
+                   ename = elem.get("name",("%s-%i" % (name,count)))
+                   descr = elem.get("description","")
                    icon = elem.get("icon","")
                    elements.append((id,ename,descr,icon,count))
+                   
+                   # find the defaultID (but to be sure take the firstID in case we don't get to the real defaultID)
+                   if count==default or defaultID==None:
+                       defaultID=id
+
                    count = count + 1
                    
-               exec("InnerCustomNode.%s=bpy.props.EnumProperty(items=elements)" % (name))
+               exec("InnerCustomNode.%s=bpy.props.EnumProperty(name='%s',items=elements,default='%s')" % (name,label,defaultID))
                            
             else:
                raise Exception("Unknown property-type:"+type)
@@ -218,7 +281,12 @@ def createNodeTree(data):
         properties=data.get("props",[])
         items = []
         for prop in properties:
-            createProperty(prop)
+            try:
+                createProperty(prop)
+            except:
+                print("error creating property from:%s" % prop["name"])
+                e = sys.exc_info()[0]
+                print("exception %s" % str(e))
 
         categoryName = data.get("category","nocategory")
 

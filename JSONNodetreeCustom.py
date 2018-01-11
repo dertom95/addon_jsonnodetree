@@ -1,0 +1,2 @@
+class CustomMethod:
+    pass

@@ -25,7 +25,8 @@ At the bottom a more complexe example.
 ```json
 {
     "name"  :   "name of the property",
-    "type"  :   "type of the property", // atm: float,int,bool,string,enum
+    "type"  :   "type of the property", // atm: float,int,bool,string,enum,vector2,vector3,vector4,color
+    "default" : "defaultvalue"
 }
 ```
  
