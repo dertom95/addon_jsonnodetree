@@ -26,7 +26,17 @@ At the bottom a more complexe example.
 {
     "name"  :   "name of the property",
     "type"  :   "type of the property", // atm: float,int,bool,string,enum,vector2,vector3,vector4,color
-    "default" : "defaultvalue"
+	"default" : "defaultvalue",
+	// for number-types:
+	"min"	:   -10,	// minvalue
+	"max"   : 	 10,	// maxvalue
+	"step"	:	  1,	// step (float: default:3 => 1/100; int=not used) 
+	// subtypes:
+	"subtype": "NONE",/*default*/ // "NONE","PIXEL","UNSIGNED","FACTOR","ANGLE","TIME","DISTANCE"
+	// **float only** :
+	"unit": "NONE",/*default*/ // "LENGTH","AREA","VOLUME","ROTATION","TIME","VELOCITY","ACCELERATION"
+	"precision" : 3   //  number of decimal digits
+
 }
 ```
  

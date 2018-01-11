@@ -223,23 +223,46 @@ def createNodeTree(data):
             label = prop.get("label",name)
             description = prop.get("description",name)
             
-            InnerCustomNode.propNames.append(name);
+            InnerCustomNode.propNames.append(name)
 
             print("prop: %s => %s" % (name,type) )
             
             if type=="float":
-               default = prop.get("default",0.0);
-               exec("InnerCustomNode.%s=bpy.props.FloatProperty(name='%s',default=%s,description='%s')" % ( name,label,default,description ))
+               print("i1") 
+               mini = prop.get("min",-65535.0)
+               print("i2") 
+               maxi = prop.get("max",65535.0)
+               print("i3") 
+               step = prop.get("step",3)
+               print("i4") 
+               subtype = prop.get("subtype","NONE")
+               print("i5") 
+               precision = prop.get("precision",3)
+               print("i6") 
+               unit = prop.get("unit","NONE")
+               print("i7") 
+               default = prop.get("default",0.0)
+               exec("InnerCustomNode.%s=bpy.props.FloatProperty(subtype='%s',name='%s',default=%s,description='%s',min=%s,max=%s,step=%s,unit='%s',precision=%s)" % ( name,subtype,label,default,description,mini,maxi,step,unit,precision ))
             elif type=="string":
-               default = prop.get("default","");
+               default = prop.get("default","")
                exec("InnerCustomNode.%s=bpy.props.StringProperty(name='%s',default='%s',description='%s')" % ( name,label,default,description ))
             elif type=="bool":
                default = prop.get("default","False")=="true" or "True";
                exec("InnerCustomNode.%s=bpy.props.BoolProperty(name='%s',default=%s,description='%s')" % ( name,label,default,description ))
             elif type=="int":
-               print("INT")
-               default = prop.get("default",0);
-               exec("InnerCustomNode.%s=bpy.props.IntProperty(name='%s',default=%s,description='%s')" % ( name,label,default,description ))
+               print("i1") 
+               mini = prop.get("min",-65535)
+               print("i2 %s"%mini) 
+               maxi = prop.get("max",65535)
+               print("i3 %s"%maxi) 
+               step = prop.get("step",1)
+               print("i4 %s"%step) 
+               subtype = prop.get("subtype","NONE")
+               default = prop.get("default",0)
+               print("i8 %s"%default) 
+               exeStr = "InnerCustomNode.%s=bpy.props.IntProperty(subtype='%s',name='%s',default=%s,description='%s',min=%s,max=%s,step=%s)" % ( name,subtype,label,default,description,mini,maxi,step )
+               print (exeStr)
+               exec(exeStr)
             elif type=="vector2":
                default = eval(prop.get("default",(0.0,0.0)));
                exec("InnerCustomNode.%s=bpy.props.FloatVectorProperty(name='%s',default=%s,size=2,description='%s')" % ( name,label,default,description ))
@@ -256,11 +279,12 @@ def createNodeTree(data):
                default = prop.get("default",0.0);
                exec("InnerCustomNode.%s=bpy.props.CollectionProperty(type=DefaultCollection,description='%s')" % ( name ))
             elif type=="enum":
-               default = eval(prop.get("default",0));               
+               default = prop.get("default",0);               
                elements = []
                count=0
                defaultID = None
                for elem in prop["elements"]:
+                   print ("ENUMA %s" % count)
                    id = elem.get("id",("%s-%i" % (name,count)))
                    ename = elem.get("name",("%s-%i" % (name,count)))
                    descr = elem.get("description","")
@@ -272,7 +296,7 @@ def createNodeTree(data):
                        defaultID=id
 
                    count = count + 1
-                   
+               print("ENUM2")        
                exec("InnerCustomNode.%s=bpy.props.EnumProperty(name='%s',items=elements,default='%s')" % (name,label,defaultID))
                            
             else:
@@ -283,6 +307,10 @@ def createNodeTree(data):
         for prop in properties:
             try:
                 createProperty(prop)
+            except NameError as err:
+                print ("error: NameError %s",str(err))
+            except TypeError as terr:
+                print ("error: TypeError %s",str(terr))
             except:
                 print("error creating property from:%s" % prop["name"])
                 e = sys.exc_info()[0]
@@ -372,6 +400,8 @@ def register():
             bpy.utils.unregister_class(cls)
         except NameError as err:
             print("Name error:"+str(err))
+        except RuntimeError as rer:
+            print("RuntimeError:%s" % str(rer))
         except:
             e = sys.exc_info()[0]
             print("error:"+str(e))
