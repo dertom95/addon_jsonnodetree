@@ -17,6 +17,7 @@ sys.path.insert(0, path)
 
 import bpy
 import JSONNodetree 
+import JSONNodetreeUtils as utils
 from bpy.types import Operator
 from bpy.app.handlers import persistent
 
@@ -126,41 +127,6 @@ class NodeTreeCustomData(bpy.types.PropertyGroup):
     # counter for unique ids
     uuid = bpy.props.IntProperty(default=0)
 
-idMap = {}
-
-# set a id for the corresponding obj
-def giveID(obj):
-    lastId = bpy.data.worlds[0].jsonNodes.uuid
-    lastId = lastId + 1
-    bpy.data.worlds[0].jsonNodes.uuid = lastId
-    obj.id = lastId
-    idMap[lastId]=obj
-    print("GAVE ID TO %s" % obj.name)
-    return lastId
-
-
-def getID(obj):
-    if obj.id == -1:
-        return giveID(obj)
-    else:
-        return obj.id
-
-
-def getNodetreeById(id):
- #   print("getnodetree:%s" % id)
-    try:
-        nt = idMap[id]
-        print("found cached nt with id %s" % id)
-        return nt
-    except:
-        # not in map atm? retrieve and cache it
-        for nodetree in bpy.data.node_groups:
-            if getID(nodetree) == id:
-                idMap[id]=nodetree
-                return nodetree
-        print("Couldn't find nodetree with id: %s" % id)
-        
-    
 classes = [
     LoadNodetreeOperator,
     NODE_PT_json_nodetree,
@@ -181,7 +147,7 @@ def register():
     def updateNodetreeName(self,ctx):
         print("UPDATED-Nodetreename(%s) to %s" % (self.name, type(ctx)) )
         if (self.nodetreeId!=-1):
-            ctx.space_data.node_tree = getNodetreeById(self.nodetreeId)
+            ctx.space_data.node_tree = utils.getNodetreeById(self.nodetreeId)
         else:
             ctx.space_data.node_tree = None
         
@@ -191,7 +157,7 @@ def register():
             #print("No nodetree(%s)" % self.name)
             return ""
         
-        nodetree = getNodetreeById(self.nodetreeId)
+        nodetree = utils.getNodetreeById(self.nodetreeId)
         if nodetree:
             return nodetree.name
         else:
@@ -204,7 +170,7 @@ def register():
         else:
             #print("set %s=%s" % (self.name, str(value) ))
             nodetree = bpy.data.node_groups[value]
-            self.nodetreeId = getID(nodetree)
+            self.nodetreeId = utils.getID(nodetree)
             #print("assigned ID %s" % getID(nodetree))
 
     # link the json-ui config data into world object and access it via byp.data.world[0].jsonNodes
@@ -215,6 +181,7 @@ def register():
     bpy.types.Object.nodetreeId = bpy.props.IntProperty(default=-1)
     bpy.types.NodeTree.id = bpy.props.IntProperty(default=-1)
     bpy.types.Object.id = bpy.props.IntProperty(default=-1)
+    bpy.types.Texture.id = bpy.props.IntProperty(default=-1)
     
     bpy.app.handlers.load_post.append(load_handler)
 

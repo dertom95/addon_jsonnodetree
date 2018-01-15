@@ -3,6 +3,7 @@ import bpy
 import sys 
 from bpy.types import NodeTree, Node, NodeSocket
 from JSONNodetreeCustom import CustomMethod 
+import JSONNodetreeUtils as utils
 
 class DefaultCollection(bpy.types.PropertyGroup):
     name = bpy.props.StringProperty(default="")
@@ -153,6 +154,7 @@ def createNodeTree(data):
             # Extensive information can be found under
             # http://wiki.blender.org/index.php/Doc:2.6/Manual/Extensions/Python/Properties
             propNames=[]
+            propTypes={} # propName=>type(string)
 
             
             # === Optional Functions ===
@@ -201,15 +203,35 @@ def createNodeTree(data):
                         #print("TRYING: CustomMethod.UI_"+data["id"]+"_"+propName+"(self,context,layout)")
                         exec("CustomMethod.UI_"+data["id"]+"_"+propName+"(self,context,layout,propName)")
                     except:
-                        # standard view
-                        layout.prop(self,propName) 
+                        propType = self.propTypes[propName]
+                        if propType == "texture":
+                            print("a5")
+                            texID = eval("self.texid_"+propName)
+                            layout.prop_search(self, "texname_"+propName, bpy.data, "textures")
+                            if texID!=-1:
+                                texture = utils.getTextureById(texID) # get the texture to the id
+                                layout.template_preview(texture)
+
+                            layout.template_texture_user()    
+                            print("a6")
+                        else:
+                            # standard view
+                            layout.prop(self,propName) 
 
             # Detail buttons in the sidebar.
             # If this function is not defined, the draw_buttons function is used instead
             def draw_buttons_ext(self, context, layout):
                 for propName in self.propNames:
-                    layout.prop(self,propName) 
-
+                    print("b1")
+                    propType = self.propTypes[propName]
+                    if propType == "texture":
+                        print("b2")
+                        layout.prop(self,"texname_"+propName)
+                    else:
+                        print("b5")
+                        print("VALUE %s" % type(self))
+                        # standard view
+                        layout.prop(self,propName) 
 
             # Optional: custom label
             # Explicit user label overrides this, but here we can define a label dynamically
@@ -224,83 +246,123 @@ def createNodeTree(data):
             description = prop.get("description",name)
             
             InnerCustomNode.propNames.append(name)
+            InnerCustomNode.propTypes[name]=type
 
             print("prop: %s => %s" % (name,type) )
             
             if type=="float":
-               print("i1") 
-               mini = prop.get("min",-65535.0)
-               print("i2") 
-               maxi = prop.get("max",65535.0)
-               print("i3") 
-               step = prop.get("step",3)
-               print("i4") 
-               subtype = prop.get("subtype","NONE")
-               print("i5") 
-               precision = prop.get("precision",3)
-               print("i6") 
-               unit = prop.get("unit","NONE")
-               print("i7") 
-               default = prop.get("default",0.0)
-               exec("InnerCustomNode.%s=bpy.props.FloatProperty(subtype='%s',name='%s',default=%s,description='%s',min=%s,max=%s,step=%s,unit='%s',precision=%s)" % ( name,subtype,label,default,description,mini,maxi,step,unit,precision ))
+                print("i1") 
+                mini = prop.get("min",-65535.0)
+                print("i2") 
+                maxi = prop.get("max",65535.0)
+                print("i3") 
+                step = prop.get("step",3)
+                print("i4") 
+                subtype = prop.get("subtype","NONE")
+                print("i5") 
+                precision = prop.get("precision",3)
+                print("i6") 
+                unit = prop.get("unit","NONE")
+                print("i7") 
+                default = prop.get("default",0.0)
+                exec("InnerCustomNode.%s=bpy.props.FloatProperty(subtype='%s',name='%s',default=%s,description='%s',min=%s,max=%s,step=%s,unit='%s',precision=%s)" % ( name,subtype,label,default,description,mini,maxi,step,unit,precision ))
             elif type=="string":
-               default = prop.get("default","")
-               exec("InnerCustomNode.%s=bpy.props.StringProperty(name='%s',default='%s',description='%s')" % ( name,label,default,description ))
+                default = prop.get("default","")
+                exec("InnerCustomNode.%s=bpy.props.StringProperty(name='%s',default='%s',description='%s')" % ( name,label,default,description ))
             elif type=="bool":
-               default = prop.get("default","False")=="true" or "True";
-               exec("InnerCustomNode.%s=bpy.props.BoolProperty(name='%s',default=%s,description='%s')" % ( name,label,default,description ))
+                default = prop.get("default","False")=="true" or "True";
+                exec("InnerCustomNode.%s=bpy.props.BoolProperty(name='%s',default=%s,description='%s')" % ( name,label,default,description ))
             elif type=="int":
-               print("i1") 
-               mini = prop.get("min",-65535)
-               print("i2 %s"%mini) 
-               maxi = prop.get("max",65535)
-               print("i3 %s"%maxi) 
-               step = prop.get("step",1)
-               print("i4 %s"%step) 
-               subtype = prop.get("subtype","NONE")
-               default = prop.get("default",0)
-               print("i8 %s"%default) 
-               exeStr = "InnerCustomNode.%s=bpy.props.IntProperty(subtype='%s',name='%s',default=%s,description='%s',min=%s,max=%s,step=%s)" % ( name,subtype,label,default,description,mini,maxi,step )
-               print (exeStr)
-               exec(exeStr)
+                print("i1") 
+                mini = prop.get("min",-65535)
+                print("i2 %s"%mini) 
+                maxi = prop.get("max",65535)
+                print("i3 %s"%maxi) 
+                step = prop.get("step",1)
+                print("i4 %s"%step) 
+                subtype = prop.get("subtype","NONE")
+                default = prop.get("default",0)
+                print("i8 %s"%default) 
+                exeStr = "InnerCustomNode.%s=bpy.props.IntProperty(subtype='%s',name='%s',default=%s,description='%s',min=%s,max=%s,step=%s)" % ( name,subtype,label,default,description,mini,maxi,step )
+                print (exeStr)
+                exec(exeStr)
             elif type=="vector2":
-               default = eval(prop.get("default",(0.0,0.0)));
-               exec("InnerCustomNode.%s=bpy.props.FloatVectorProperty(name='%s',default=%s,size=2,description='%s')" % ( name,label,default,description ))
+                default = eval(prop.get("default",(0.0,0.0)));
+                exec("InnerCustomNode.%s=bpy.props.FloatVectorProperty(name='%s',default=%s,size=2,description='%s')" % ( name,label,default,description ))
             elif type=="vector3":
-               default = eval(prop.get("default",(0.0,0.0,0.0)));
-               exec("InnerCustomNode.%s=bpy.props.FloatVectorProperty(name='%s',default=%s,size=3,description='%s')" % ( name,label,default,description ))
+                default = eval(prop.get("default",(0.0,0.0,0.0)));
+                exec("InnerCustomNode.%s=bpy.props.FloatVectorProperty(name='%s',default=%s,size=3,description='%s')" % ( name,label,default,description ))
             elif type=="vector4":
-               default = eval(prop.get("default",(0.0,0.0,0.0,0.0)));
-               exec("InnerCustomNode.%s=bpy.props.FloatVectorProperty(name='%s',default=%s,size=4,description='%s')" % ( name,label,default,description ))
+                default = eval(prop.get("default",(0.0,0.0,0.0,0.0)));
+                exec("InnerCustomNode.%s=bpy.props.FloatVectorProperty(name='%s',default=%s,size=4,description='%s')" % ( name,label,default,description ))
             elif type=="color":
-               default = eval(prop.get("default",(1.0,1.0,1.0,1.0)));
-               exec("InnerCustomNode.%s=bpy.props.FloatVectorProperty(name='%s',default=%s,size=4,subtype='COLOR',description='%s',min=0.0,max=1.0 )" % ( name,label,default,description))
+                default = eval(prop.get("default",(1.0,1.0,1.0,1.0)));
+                exec("InnerCustomNode.%s=bpy.props.FloatVectorProperty(name='%s',default=%s,size=4,subtype='COLOR',description='%s',min=0.0,max=1.0 )" % ( name,label,default,description))
             elif type=="collection":
-               default = prop.get("default",0.0);
-               exec("InnerCustomNode.%s=bpy.props.CollectionProperty(type=DefaultCollection,description='%s')" % ( name ))
+                default = prop.get("default",0.0);
+                exec("InnerCustomNode.%s=bpy.props.CollectionProperty(type=DefaultCollection,description='%s')" % ( name ))
+            elif type=="texture":
+                def setTextureName(self,value): #set texturename
+                    print("####SET tex to value:%s" % value)
+                    if value=="": # no tex selected
+                        texID = -1
+                        return
+
+                    tex = bpy.data.textures[value] # get the tex-obj to the selected tex-name
+                    texID = utils.getID(tex) # get the id of this tex-obj (or create one)
+                    print("GOT ID:%s" % texID)
+                    exc = "self.texid_%s=%s" % (name,texID)
+                    print("EXC: %s" % exc)
+                    exec(exc)
+
+                def getTextureName(self):
+                    texID = eval("self.texid_"+name) or -1
+                    print ("TEXID:%s" % texID)
+                    print("GET TEX: current %s" % texID)
+                    if texID == -1:
+                        print("IT IS NULL")
+                        return ""
+
+                    tex = utils.getTextureById(texID)
+                    if tex:
+                        print ("NAME %s" % tex.name)
+                        return tex.name
+                    else:
+                        print ("NO TEX WITH ID %s" % texID);
+                        return ""
+
+                def updateTextureName(self,ctx):
+                    texID = eval("self.texid_"+name) or -1
+                    
+                    print("UPDATE TextureName: %s - %s" % (self,ctx))
+
+                exec("InnerCustomNode.texid_%s=bpy.props.IntProperty(name='%s',default=-1,description='texture: %s')" % (name,label,description))
+                exec("InnerCustomNode.texname_%s=bpy.props.StringProperty(name='%s',description='texture: %s',get=getTextureName,update=updateTextureName,set=setTextureName)" % (name,label,description))
             elif type=="enum":
-               default = prop.get("default",0);               
-               elements = []
-               count=0
-               defaultID = None
-               for elem in prop["elements"]:
-                   print ("ENUMA %s" % count)
-                   id = elem.get("id",("%s-%i" % (name,count)))
-                   ename = elem.get("name",("%s-%i" % (name,count)))
-                   descr = elem.get("description","")
-                   icon = elem.get("icon","")
-                   elements.append((id,ename,descr,icon,count))
+                default = prop.get("default",0);               
+                elements = []
+                count=0
+                defaultID = None
+                for elem in prop["elements"]:
+                    id = elem.get("id",("%s-%i" % (name,count)))
+                    ename = elem.get("name",("%s-%i" % (name,count)))
+                    if (count == default):
+                       descr = "%s - %s[default]" % (count,elem.get("description",""))
+                    else:
+                        descr = "%s - %s" % (count,elem.get("description",""))
+                    icon = elem.get("icon","")
+                    elements.append((id,ename,descr,icon,count))
                    
                    # find the defaultID (but to be sure take the firstID in case we don't get to the real defaultID)
-                   if count==default or defaultID==None:
-                       defaultID=id
+                    if count==default or defaultID==None:
+                        defaultID=id
 
-                   count = count + 1
-               print("ENUM2")        
-               exec("InnerCustomNode.%s=bpy.props.EnumProperty(name='%s',items=elements,default='%s')" % (name,label,defaultID))
+                    count = count + 1
+
+                exec("InnerCustomNode.%s=bpy.props.EnumProperty(name='%s',items=elements,default='%s')" % (name,label,defaultID))
                            
             else:
-               raise Exception("Unknown property-type:"+type)
+                raise Exception("Unknown property-type:"+type)
     
         properties=data.get("props",[])
         items = []
