@@ -15,17 +15,16 @@ path = os.path.dirname(os.path.realpath(__file__))
 print("__##current_path:"+path)
 sys.path.insert(0, path)
 
+
 import bpy
 import JSONNodetree 
-import JSONNodetreeUtils as utils
+import JSONNodetreeUtils
 from bpy.types import Operator
 from bpy.app.handlers import persistent
-
 
 #import JSONNodeServer
 
 #JSONNodeServer.startServer()
-
 
 
 def processNodetreeFromFile():
@@ -34,6 +33,29 @@ def processNodetreeFromFile():
     jsonData = JSONNodetree.loadJSON(jsonPath)
     JSONNodetree.createNodeTrees(jsonData)		
     JSONNodetree.register()
+
+
+def exportNodetree(nodetree):
+    JSONNodetree.exportNodes(nodetree)
+
+class ModalOperator(bpy.types.Operator):
+    bl_idname = "object.modal_operator"
+    bl_label = "Simple Modal Operator"
+
+    def execute(self, context):
+        print("This is the modal operator")
+        return {'FINISHED'}
+
+    def modal(self, context, event):
+        print ("FLUSH ACTIONS")
+        JSONNodetreeUtils.flushIDAssignmentBuffer()
+        return {'FINISHED'}
+
+    def invoke(self, context, event):
+        print("This is the invoker")
+
+        context.window_manager.modal_handler_add(self)
+        return {'RUNNING_MODAL'}
 
 
 # Export startup config fo gamekit
@@ -52,7 +74,27 @@ class LoadNodetreeOperator(bpy.types.Operator):
         processNodetreeFromFile()
         print("FINISHED")
 
-        return {'FINISHED'}    
+        return {'FINISHED'} 
+
+# Export nodetrees
+class ExportNodetreeOperator(bpy.types.Operator):
+    ''''''
+    bl_idname = "nodetree.export"
+    bl_label = "export nodetrees"
+    bl_options = {'REGISTER', 'UNDO'}
+    bl_space_type = 'NODE_EDITOR'
+ 
+    @classmethod
+    def poll(cls, context):
+        return True
+
+    def execute(self, context):
+        for nodetree in bpy.data.node_groups:
+            exportNodetree(nodetree)
+
+        print("FINISHED")
+
+        return {'FINISHED'}        
 
 class NODE_PT_json_nodetree(bpy.types.Panel):
     bl_space_type = 'NODE_EDITOR'
@@ -107,6 +149,9 @@ class NODE_PT_json_nodetree(bpy.types.Panel):
         row = layout.row()
         row.prop(jsonNodes,"autoSelectObjectNodetree",text="autoselect object nodetree")
 
+        row = layout.row()
+        row.operator("nodetree.export")
+
 @persistent
 def load_handler(dummy):
     print("Load Handler:", bpy.data.filepath)
@@ -128,9 +173,11 @@ class NodeTreeCustomData(bpy.types.PropertyGroup):
     uuid = bpy.props.IntProperty(default=0)
 
 classes = [
+    ExportNodetreeOperator,
     LoadNodetreeOperator,
     NODE_PT_json_nodetree,
-    NodeTreeCustomData
+    NodeTreeCustomData,
+    ModalOperator    
 ]
 
 def register():
@@ -139,7 +186,7 @@ def register():
         unregister()
     except:
         pass
-    
+
     for clazz in classes:
         bpy.utils.register_class(clazz)
 
@@ -147,7 +194,7 @@ def register():
     def updateNodetreeName(self,ctx):
         print("UPDATED-Nodetreename(%s) to %s" % (self.name, type(ctx)) )
         if (self.nodetreeId!=-1):
-            ctx.space_data.node_tree = utils.getNodetreeById(self.nodetreeId)
+            ctx.space_data.node_tree = JSONNodetreeUtils.getNodetreeById(self.nodetreeId)
         else:
             ctx.space_data.node_tree = None
         
@@ -157,7 +204,7 @@ def register():
             #print("No nodetree(%s)" % self.name)
             return ""
         
-        nodetree = utils.getNodetreeById(self.nodetreeId)
+        nodetree = JSONNodetreeUtils.getNodetreeById(self.nodetreeId)
         if nodetree:
             return nodetree.name
         else:
@@ -170,7 +217,7 @@ def register():
         else:
             #print("set %s=%s" % (self.name, str(value) ))
             nodetree = bpy.data.node_groups[value]
-            self.nodetreeId = utils.getID(nodetree)
+            self.nodetreeId = JSONNodetreeUtils.getID(nodetree)
             #print("assigned ID %s" % getID(nodetree))
 
     # link the json-ui config data into world object and access it via byp.data.world[0].jsonNodes
@@ -181,10 +228,12 @@ def register():
     bpy.types.Object.nodetreeId = bpy.props.IntProperty(default=-1)
     bpy.types.NodeTree.id = bpy.props.IntProperty(default=-1)
     bpy.types.Object.id = bpy.props.IntProperty(default=-1)
-    bpy.types.Texture.id = bpy.props.IntProperty(default=-1)
+#    bpy.types.Texture.id = bpy.props.IntProperty(default=-1)
+    bpy.types.Image.id = bpy.props.IntProperty(default=-1)
     
     bpy.app.handlers.load_post.append(load_handler)
 
+    
 
 
 def unregister():

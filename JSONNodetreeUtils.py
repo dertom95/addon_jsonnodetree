@@ -2,20 +2,87 @@ import bpy
 
 idCache = {}
 
+class Data:
+    pass
+
+
+initialized = False
+
+def init():
+    global initialized
+
+    if (hasattr(Data,"actionCTX")):
+        return
+
+    print("##init##")
+
+    class ActionContext:
+        def getID(self):
+            return self.uuid
+
+        initialized = False
+        actions = []
+        waitingObjects = {}
+        uuid = bpy.data.worlds[0].jsonNodes.uuid
+
+    Data.actionCTX = ActionContext()
+    print("ADDED ACTIONCTX TO DATA")
+
+def addIDAction(obj,_id):
+    print("ADD ACTION")
+    if not initialized:
+        init()
+
+    def doit():
+        print("Assign %s.id=%s" % (obj,_id))
+        obj.id=_id
+
+    Data.actionCTX.actions.append(doit)
+    Data.actionCTX.waitingObjects[obj]=_id
+
+
+def modalStarter(self,ctx):
+    bpy.ops.object.modal_operator('INVOKE_DEFAULT')
+
 # set a id for the corresponding obj
-def giveID(obj):
-    lastId = bpy.data.worlds[0].jsonNodes.uuid
-    lastId = lastId + 1
-    bpy.data.worlds[0].jsonNodes.uuid = lastId
-    obj.id = lastId
+def giveID(obj,buffered):
+    if not initialized:
+        init()
+
+    if buffered:
+        lastId = Data.actionCTX.getID()
+        lastId = lastId + 1
+        print ("LASTID:%s" % lastId)
+        Data.actionCTX.uuid = lastId
+        addIDAction(obj,lastId)
+    else:
+        lastId = bpy.data.worlds[0].jsonNodes.uuid
+        lastId = lastId + 1
+        bpy.data.worlds[0].jsonNodes.uuid = lastId
+        obj.id = lastId
     idCache[lastId]=obj
-    print("GAVE ID TO %s" % obj.name)
+    print("GAVE ID TO %s" % lastId)
     return lastId
 
+def flushIDAssignmentBuffer():
+    init()
 
-def getID(obj):
+    bpy.data.worlds[0].jsonNodes.uuid=Data.actionCTX.uuid
+
+    for act in Data.actionCTX.actions:
+        print("CALL START")
+        act()
+        print("CALL ENDäääääääääääääääääääääääää")
+    Data.actionCTX.actions = []
+    Data.actionCTX.waitingObjects={}
+
+
+def getID(obj,buffered=True):
     if obj.id == -1:
-        return giveID(obj)
+        if buffered and hasattr(Data,"actionCTX") and obj in Data.actionCTX.waitingObjects:
+            return Data.actionCTX.waitingObjects[obj]
+        else:
+            return giveID(obj,buffered)
     else:
         return obj.id
 
@@ -35,7 +102,7 @@ def getById(array,id):
 
     try:
         nt = idCache[id]
-        print("found cached nt with id %s" % id)
+        #print("found cached nt with id %s" % id)
         return nt
     except:
         # not in map atm? retrieve and cache it
@@ -46,33 +113,3 @@ def getById(array,id):
         print("Couldn't find nodetree with id: %s" % id)
     return None
 
-def createIDHooks():
-    # property hooks:
-    def updateNodetreeName(self,ctx):
-        print("UPDATED-Nodetreename(%s) to %s" % (self.name, type(ctx)) )
-        if (self.nodetreeId!=-1):
-            ctx.space_data.node_tree = utils.getNodetreeById(self.nodetreeId)
-        else:
-            ctx.space_data.node_tree = None
-        
-    def getNodetreeName(self):
-       # print("get")
-        if self.nodetreeId == -1:
-            #print("No nodetree(%s)" % self.name)
-            return ""
-        
-        nodetree = utils.getNodetreeById(self.nodetreeId)
-        if nodetree:
-            return nodetree.name
-        else:
-            return ""
-    
-    def setNodetreeName(self,value):
-        if value == "":
-            #print("RESETID")
-            self.nodetreeId = -1
-        else:
-            #print("set %s=%s" % (self.name, str(value) ))
-            nodetree = bpy.data.node_groups[value]
-            self.nodetreeId = utils.getID(nodetree)
-            #print("assigned ID %s" % getID(nodetree))    

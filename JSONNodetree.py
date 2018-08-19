@@ -3,7 +3,13 @@ import bpy
 import sys 
 from bpy.types import NodeTree, Node, NodeSocket
 from JSONNodetreeCustom import CustomMethod 
-import JSONNodetreeUtils as utils
+import JSONNodetreeUtils 
+
+#import rxUtils
+#from rx.subjects import Subject
+
+
+
 
 class DefaultCollection(bpy.types.PropertyGroup):
     name = bpy.props.StringProperty(default="")
@@ -11,6 +17,16 @@ class DefaultCollection(bpy.types.PropertyGroup):
 #classes = [DefaultCollection]
 classes = []
 node_categories = []
+
+# function to get textures for template_icon_preview (thx, andreas esau)
+def get_icons(self,context):
+    icons = []
+#    for i,tex in enumerate(bpy.data.textures):
+#        icons.append((tex.name,tex.name,tex.name,tex.preview.icon_id,i))
+    for i,tex in enumerate(bpy.data.images):
+        id = JSONNodetreeUtils.getID(tex,True)
+        icons.append((str(id),tex.name,tex.name,tex.preview.icon_id,id))
+    return icons    
 
 def getConfig():
     return bpy.data.worlds[0].jsonNodes
@@ -26,6 +42,89 @@ def loadJSON(filename):
 
 def feedback(output,type=""):
     print("Feedback: %s" % output)
+
+def propValue(node,propName):
+    prop = eval("node.%s" % propName)
+    propType = node.propTypes[propName]
+    if (propType in ["vector3","vector2","color"]):
+        output="("
+        arraySize = len(prop)
+        for idx in range(arraySize):
+            output+=str(prop[idx])
+            if (idx+1 < arraySize):
+                output+=","
+        output +=")"
+        return output
+    else:
+        return str(prop)
+
+def exportNodes(nodetree,onlyValueDifferentFromDefault=False):
+    tree = {
+        "name" : nodetree.name,
+        "nodes": [],
+        "connections" : {}
+    }
+    exportNodes = tree["nodes"]
+
+    nodeCache = {}
+    id = 0
+    # first pass create the nodes
+    for node in nodetree.nodes:
+        dictNode = {
+            "id"    :   id,
+            "type"  :   node.bl_idname,
+            "name"  :   node.name,
+            "props" :   [],
+            "inputsockets" : [],
+            "outputsockets" : []
+        }
+        nodeCache[node]=dictNode
+        id=id+1
+        exportNodes.append(dictNode)
+
+        props = dictNode["props"]
+
+        for propName in node.propNames:
+            print("MAPBACK: %s",propName)
+            mapBackName = ""
+            try:
+                mapBackName = node.propNameMapping[propName]
+            except:
+                print("Couldnt mapback:%s",propName)
+                mapBackName = propName[5:]
+
+            prop = { 
+         #       "name" : propName[5:],
+                "name" : mapBackName,
+                "value" : propValue(node,propName),
+                "type"  : node.propTypes[propName]
+            }
+
+            if onlyValueDifferentFromDefault:
+                try:
+                    print("node.bl_rna.properties['"+propName+"'].default")
+                    propertyDefault = eval("node.bl_rna.properties['"+propName+"']").default
+                    if prop["value"]!=str(propertyDefault):
+                        # value changed
+                        props.append(prop)
+                except:
+                    print("Problem getting default value for %s",propName)
+            else:
+                props.append(prop)
+
+    
+    result = json.dumps(tree, ensure_ascii=False)
+    print(result)
+
+    # 2nd pass create the connections
+    #for node in nodetree.nodes:
+        
+           # store id for this node
+    return tree
+
+
+            
+        
 
 class MyCustomSocket(NodeSocket):
     # Description string
@@ -155,7 +254,7 @@ def createNodeTree(data):
             # http://wiki.blender.org/index.php/Doc:2.6/Manual/Extensions/Python/Properties
             propNames=[]
             propTypes={} # propName=>type(string)
-
+            propNameMapping={} # map property-conformont name with original name (e.g. 'Occlusion_Culling' =>  'Occluision Culling')
             
             # === Optional Functions ===
             # Initialization function, called when a new node is created.
@@ -205,15 +304,8 @@ def createNodeTree(data):
                     except:
                         propType = self.propTypes[propName]
                         if propType == "texture":
-                            print("a5")
-                            texID = eval("self.texid_"+propName)
-                            layout.prop_search(self, "texname_"+propName, bpy.data, "textures")
-                            if texID!=-1:
-                                texture = utils.getTextureById(texID) # get the texture to the id
-                                layout.template_preview(texture)
-
-                            layout.template_texture_user()    
-                            print("a6")
+                            layout.label("texture:")
+                            layout.template_icon_view(self,propName)
                         else:
                             # standard view
                             layout.prop(self,propName) 
@@ -222,31 +314,34 @@ def createNodeTree(data):
             # If this function is not defined, the draw_buttons function is used instead
             def draw_buttons_ext(self, context, layout):
                 for propName in self.propNames:
-                    print("b1")
-                    propType = self.propTypes[propName]
-                    if propType == "texture":
-                        print("b2")
-                        layout.prop(self,"texname_"+propName)
-                    else:
-                        print("b5")
-                        print("VALUE %s" % type(self))
-                        # standard view
-                        layout.prop(self,propName) 
+                    try:
+                        # override? CustomMethod.[NodeName]_[PropName]
+                        #print("TRYING: CustomMethod.UI_"+data["id"]+"_"+propName+"(self,context,layout)")
+                        exec("CustomMethod.UI_sidebar_"+data["id"]+"_"+propName+"(self,context,layout,propName)")
+                    except:
+                        propType = self.propTypes[propName]
+                        if propType == "texture":
+                            layout.template_icon_view(self,propName)
+                        else:
+                            # standard view
+                            layout.prop(self,propName) 
 
             # Optional: custom label
             # Explicit user label overrides this, but here we can define a label dynamically
             #def draw_label(self):
             #    return "I am a custom node"
-        
+        def export(self):
+            print("EXPORT") 
 
         def createProperty(prop):
-            name = prop["name"];
-            type = prop["type"];
-            label = prop.get("label",name)
+            name = "prop_"+prop["name"].replace(" ","_");
+            type = prop["type"]
+            label = prop.get("label",prop["name"])
             description = prop.get("description",name)
             
             InnerCustomNode.propNames.append(name)
             InnerCustomNode.propTypes[name]=type
+            InnerCustomNode.propNameMapping[name]=prop["name"]
 
             print("prop: %s => %s" % (name,type) )
             
@@ -270,7 +365,7 @@ def createNodeTree(data):
                 default = prop.get("default","")
                 exec("InnerCustomNode.%s=bpy.props.StringProperty(name='%s',default='%s',description='%s')" % ( name,label,default,description ))
             elif type=="bool":
-                default = prop.get("default","False")=="true" or "True";
+                default = prop.get("default",False)
                 exec("InnerCustomNode.%s=bpy.props.BoolProperty(name='%s',default=%s,description='%s')" % ( name,label,default,description ))
             elif type=="int":
                 print("i1") 
@@ -287,57 +382,24 @@ def createNodeTree(data):
                 print (exeStr)
                 exec(exeStr)
             elif type=="vector2":
-                default = eval(prop.get("default",(0.0,0.0)));
+                default = prop.get("default",(0.0,0.0));
                 exec("InnerCustomNode.%s=bpy.props.FloatVectorProperty(name='%s',default=%s,size=2,description='%s')" % ( name,label,default,description ))
             elif type=="vector3":
-                default = eval(prop.get("default",(0.0,0.0,0.0)));
+                default = prop.get("default",None) or (0.0,0.0,0.0)
+                print("DEFAULT %s" % str(default))
                 exec("InnerCustomNode.%s=bpy.props.FloatVectorProperty(name='%s',default=%s,size=3,description='%s')" % ( name,label,default,description ))
             elif type=="vector4":
                 default = eval(prop.get("default",(0.0,0.0,0.0,0.0)));
                 exec("InnerCustomNode.%s=bpy.props.FloatVectorProperty(name='%s',default=%s,size=4,description='%s')" % ( name,label,default,description ))
             elif type=="color":
+                print("InnerCustomNode.%s=bpy.props.FloatVectorProperty(name='%s',default=%s,size=4,subtype='COLOR',description='%s',min=0.0,max=1.0 )" % ( name,label,default,description))
                 default = eval(prop.get("default",(1.0,1.0,1.0,1.0)));
                 exec("InnerCustomNode.%s=bpy.props.FloatVectorProperty(name='%s',default=%s,size=4,subtype='COLOR',description='%s',min=0.0,max=1.0 )" % ( name,label,default,description))
             elif type=="collection":
                 default = prop.get("default",0.0);
                 exec("InnerCustomNode.%s=bpy.props.CollectionProperty(type=DefaultCollection,description='%s')" % ( name ))
             elif type=="texture":
-                def setTextureName(self,value): #set texturename
-                    print("####SET tex to value:%s" % value)
-                    if value=="": # no tex selected
-                        texID = -1
-                        return
-
-                    tex = bpy.data.textures[value] # get the tex-obj to the selected tex-name
-                    texID = utils.getID(tex) # get the id of this tex-obj (or create one)
-                    print("GOT ID:%s" % texID)
-                    exc = "self.texid_%s=%s" % (name,texID)
-                    print("EXC: %s" % exc)
-                    exec(exc)
-
-                def getTextureName(self):
-                    texID = eval("self.texid_"+name) or -1
-                    print ("TEXID:%s" % texID)
-                    print("GET TEX: current %s" % texID)
-                    if texID == -1:
-                        print("IT IS NULL")
-                        return ""
-
-                    tex = utils.getTextureById(texID)
-                    if tex:
-                        print ("NAME %s" % tex.name)
-                        return tex.name
-                    else:
-                        print ("NO TEX WITH ID %s" % texID);
-                        return ""
-
-                def updateTextureName(self,ctx):
-                    texID = eval("self.texid_"+name) or -1
-                    
-                    print("UPDATE TextureName: %s - %s" % (self,ctx))
-
-                exec("InnerCustomNode.texid_%s=bpy.props.IntProperty(name='%s',default=-1,description='texture: %s')" % (name,label,description))
-                exec("InnerCustomNode.texname_%s=bpy.props.StringProperty(name='%s',description='texture: %s',get=getTextureName,update=updateTextureName,set=setTextureName)" % (name,label,description))
+                exec("InnerCustomNode.%s=bpy.props.EnumProperty(items=get_icons,update=JSONNodetreeUtils.modalStarter)" % name)
             elif type=="enum":
                 default = prop.get("default",0);               
                 elements = []
@@ -373,6 +435,8 @@ def createNodeTree(data):
                 print ("error: NameError %s",str(err))
             except TypeError as terr:
                 print ("error: TypeError %s",str(terr))
+            except AttributeError as aerr:
+                print ("attributeError: %s",str(aerr))
             except:
                 print("error creating property from:%s" % prop["name"])
                 e = sys.exc_info()[0]
