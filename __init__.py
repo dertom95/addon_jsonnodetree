@@ -32,7 +32,7 @@ def processNodetreeFromFile():
     print("LOAD NODETREEs from %s" % (jsonPath))
     jsonData = JSONNodetree.loadJSON(jsonPath)
     JSONNodetree.createNodeTrees(jsonData)		
-    JSONNodetree.register()
+    JSONNodetree.ntRegister()
 
 
 def exportNodetree(nodetree):
@@ -240,6 +240,12 @@ def unregister():
     for clazz in classes:
         bpy.utils.unregister_class(clazz)
 
+    del bpy.types.Object.nodetreeName
+    del bpy.types.Object.nodetreeId
+    del bpy.types.NodeTree.id
+    del bpy.types.Object.id
+    del bpy.types.Image.id
+    bpy.app.handlers.load_post.remove(load_handler)
 #    rxUtils.disposeAll()
 
 if __name__ == "__main__":

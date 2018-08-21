@@ -473,7 +473,7 @@ def createNodeTree(data):
 
 
 def createNodeTrees(data):
-    unregister()
+    ntUnregister()
     global classes
     global node_categories
     
@@ -518,7 +518,7 @@ categoryItems = []
 #    ]),
 #]
 
-def register():
+def ntRegister():
     from bpy.utils import register_class
     for cls in classes:
         try:
@@ -548,9 +548,10 @@ def register():
     print("REGISTER NODE-Cats:"+str(node_categories))
 
     nodeitems_utils.register_node_categories('CUSTOMNODES', node_categories)
+    print("AFTER")
 
 
-def unregister():
+def ntUnregister():
     try:
         nodeitems_utils.unregister_node_categories('CUSTOMNODES')
     except:
@@ -564,5 +565,5 @@ def unregister():
 
 
 
-if __name__ == "__main__":
-    register()
+#if __name__ == "__main__":
+#    register()
