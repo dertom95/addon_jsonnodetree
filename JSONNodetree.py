@@ -2,7 +2,7 @@ import json
 import bpy
 import sys 
 from bpy.types import NodeTree, Node, NodeSocket
-from JSONNodetreeCustom import CustomMethod 
+from JSONNodetreeCustom import Custom
 import JSONNodetreeUtils 
 
 #import rxUtils
@@ -254,7 +254,10 @@ def createNodeTree(data):
             # http://wiki.blender.org/index.php/Doc:2.6/Manual/Extensions/Python/Properties
             propNames=[]
             propTypes={} # propName=>type(string)
+            
+            # TODO: do I need this? I have the name as it was exported already in the label!?
             propNameMapping={} # map property-conformont name with original name (e.g. 'Occlusion_Culling' =>  'Occluision Culling')
+
             
             # === Optional Functions ===
             # Initialization function, called when a new node is created.
@@ -298,9 +301,9 @@ def createNodeTree(data):
 
                 for propName in self.propNames:
                     try:
-                        # override? CustomMethod.[NodeName]_[PropName]
-                        #print("TRYING: CustomMethod.UI_"+data["id"]+"_"+propName+"(self,context,layout)")
-                        exec("CustomMethod.UI_"+data["id"]+"_"+propName+"(self,context,layout,propName)")
+                        # override? Custom.[NodeName]_[PropName]
+                        #print('exec("Custom.UI_'+data["id"]+"_"+propName+"(self,context,layout,propName)\")")
+                        exec("Custom.UI_"+data["id"]+"_"+propName+"(self,context,layout,propName)")
                     except:
                         propType = self.propTypes[propName]
                         if propType == "texture":
@@ -315,9 +318,9 @@ def createNodeTree(data):
             def draw_buttons_ext(self, context, layout):
                 for propName in self.propNames:
                     try:
-                        # override? CustomMethod.[NodeName]_[PropName]
-                        #print("TRYING: CustomMethod.UI_"+data["id"]+"_"+propName+"(self,context,layout)")
-                        exec("CustomMethod.UI_sidebar_"+data["id"]+"_"+propName+"(self,context,layout,propName)")
+                        # override? Custom.[NodeName]_[PropName]
+                        #print("TRYING: Custom.UI_"+data["id"]+"_"+propName+"(self,context,layout)")
+                        exec("Custom.UI_sidebar_"+data["id"]+"_"+propName+"(self,context,layout,propName)")
                     except:
                         propType = self.propTypes[propName]
                         if propType == "texture":
@@ -365,7 +368,8 @@ def createNodeTree(data):
                 default = prop.get("default","")
                 exec("InnerCustomNode.%s=bpy.props.StringProperty(name='%s',default='%s',description='%s')" % ( name,label,default,description ))
             elif type=="bool":
-                default = prop.get("default",False)
+                default = prop.get("default","False")=="true"
+                print("BoolDefault:%s" % default)
                 exec("InnerCustomNode.%s=bpy.props.BoolProperty(name='%s',default=%s,description='%s')" % ( name,label,default,description ))
             elif type=="int":
                 print("i1") 
@@ -386,13 +390,13 @@ def createNodeTree(data):
                 exec("InnerCustomNode.%s=bpy.props.FloatVectorProperty(name='%s',default=%s,size=2,description='%s')" % ( name,label,default,description ))
             elif type=="vector3":
                 default = prop.get("default",None) or (0.0,0.0,0.0)
-                print("DEFAULT %s" % str(default))
+                #print("DEFAULT %s" % str(default))
                 exec("InnerCustomNode.%s=bpy.props.FloatVectorProperty(name='%s',default=%s,size=3,description='%s')" % ( name,label,default,description ))
             elif type=="vector4":
                 default = eval(prop.get("default",(0.0,0.0,0.0,0.0)));
                 exec("InnerCustomNode.%s=bpy.props.FloatVectorProperty(name='%s',default=%s,size=4,description='%s')" % ( name,label,default,description ))
             elif type=="color":
-                print("InnerCustomNode.%s=bpy.props.FloatVectorProperty(name='%s',default=%s,size=4,subtype='COLOR',description='%s',min=0.0,max=1.0 )" % ( name,label,default,description))
+                #print("InnerCustomNode.%s=bpy.props.FloatVectorProperty(name='%s',default=%s,size=4,subtype='COLOR',description='%s',min=0.0,max=1.0 )" % ( name,label,default,description))
                 default = eval(prop.get("default",(1.0,1.0,1.0,1.0)));
                 exec("InnerCustomNode.%s=bpy.props.FloatVectorProperty(name='%s',default=%s,size=4,subtype='COLOR',description='%s',min=0.0,max=1.0 )" % ( name,label,default,description))
             elif type=="collection":
@@ -427,6 +431,13 @@ def createNodeTree(data):
                 raise Exception("Unknown property-type:"+type)
     
         properties=data.get("props",[])
+        try:
+            #exec("Custom.UI_sidebar_"+data["id"]+"_"+propName+"(self,context,layout,propName)")
+            #print('properties.extend(Custom.UI_'+data["id"]+'_props() )')
+            exec('properties.extend(Custom.UI_'+data["id"]+'_props() )')
+        except:
+            pass
+
         items = []
         for prop in properties:
             try:

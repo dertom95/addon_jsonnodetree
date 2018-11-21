@@ -77,7 +77,8 @@ def flushIDAssignmentBuffer():
     Data.actionCTX.waitingObjects={}
 
 
-def getID(obj,buffered=True):
+## TODO: Check about the textureIDs that seemed to need buffered=True as default
+def getID(obj,buffered=False):
     if obj.id == -1:
         if buffered and hasattr(Data,"actionCTX") and obj in Data.actionCTX.waitingObjects:
             return Data.actionCTX.waitingObjects[obj]
@@ -107,7 +108,7 @@ def getById(array,id):
     except:
         # not in map atm? retrieve and cache it
         for nodetree in array:
-            if getID(nodetree) == id:
+            if getID(nodetree,False) == id:
                 idCache[id]=nodetree
                 return nodetree
         print("Couldn't find nodetree with id: %s" % id)
