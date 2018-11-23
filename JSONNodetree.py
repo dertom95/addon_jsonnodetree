@@ -2,6 +2,9 @@ import json
 import bpy
 import sys 
 from bpy.types import NodeTree, Node, NodeSocket
+import base64
+
+
 from JSONNodetreeCustom import Custom
 import JSONNodetreeUtils 
 
@@ -302,7 +305,7 @@ def createNodeTree(data):
                 for propName in self.propNames:
                     try:
                         # override? Custom.[NodeName]_[PropName]
-                        #print('exec("Custom.UI_'+data["id"]+"_"+propName+"(self,context,layout,propName)\")")
+                        print('exec("Custom.UI_'+data["id"]+"_"+propName+"(self,context,layout,propName)\")")
                         exec("Custom.UI_"+data["id"]+"_"+propName+"(self,context,layout,propName)")
                     except:
                         propType = self.propTypes[propName]
@@ -433,7 +436,7 @@ def createNodeTree(data):
         properties=data.get("props",[])
         try:
             #exec("Custom.UI_sidebar_"+data["id"]+"_"+propName+"(self,context,layout,propName)")
-            #print('properties.extend(Custom.UI_'+data["id"]+'_props() )')
+            print('properties.extend(Custom.UI_'+data["id"]+'_props() )')
             exec('properties.extend(Custom.UI_'+data["id"]+'_props() )')
         except:
             pass
@@ -493,7 +496,15 @@ def createNodeTrees(data):
     # create nodetrees
     for nodetree in data["trees"]:
         createNodeTree(nodetree)
-    
+    for customUI in data["customUI"]:
+        customUIScript = base64.b64decode(customUI)
+        customUIScript = customUIScript.decode("utf-8")
+        print("CUSTOMUI:"+customUIScript )
+        exec(customUIScript)
+        print("FINISHED CUSTOMUI")
+        print("TYPE: "+str(type(Custom)))
+
+
     # create categories
     
 

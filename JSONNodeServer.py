@@ -31,4 +31,5 @@ def zmqserver(val):
         socket.send(b"World")
 
 def startServer():
-    rxUtils.addDisposable(rx.Observable.from_([1],pool_scheduler).map(zmqserver). subscribe(lambda val: print("VALUE:"+str(val)+" "+current_thread().name)))
+        print("trying to start server")
+        rxUtils.addDisposable(rx.Observable.from_([1],pool_scheduler).map(zmqserver). subscribe(lambda val: print("VALUE:"+str(val)+" "+current_thread().name)))
