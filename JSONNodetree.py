@@ -49,7 +49,7 @@ def feedback(output,type=""):
 def propValue(node,propName):
     prop = eval("node.%s" % propName)
     propType = node.propTypes[propName]
-    if (propType in ["vector3","vector2","color"]):
+    if (propType in ["vector4","vector3","vector2","color"]):
         output="("
         arraySize = len(prop)
         for idx in range(arraySize):
@@ -206,21 +206,28 @@ def createNodeTree(data):
             
             config = getConfig()
             
+            # check if someone have a custom selection for the current node-tree selection
+            overrideNodetree = JSONNodetreeUtils.overrideAutoNodetree(current_object)
+
+            if overrideNodetree:
+                return overrideNodetree,overrideNodetree,current_object
+
             # automatically select nodetree of the current object?
             if current_object.nodetreeName!="" and config.autoSelectObjectNodetree == True:
-               # check if the corresponding nodetree acutally exists
-               if current_object.nodetreeName in bpy.data.node_groups:
-                   # node tree is known
-                   show_nodetree = bpy.data.node_groups[current_object.nodetreeName]
-                   feedback("found nodetree: %s" % current_object.nodetreeName) 
-               else:
-                   # inconsistend data. a nodetree is referenced that is not known
-                   feedback("Unknown nodetree(%s) assigned to object %s" % (current_object.nodetreeName,current_object.name))
-            
+                # check if the corresponding nodetree acutally exists
+                if current_object.nodetreeName in bpy.data.node_groups:
+                    # node tree is known
+                    show_nodetree = bpy.data.node_groups[current_object.nodetreeName]
+                    feedback("found nodetree: %s" % current_object.nodetreeName) 
+                else:
+                    # inconsistend data. a nodetree is referenced that is not known
+                    feedback("Unknown nodetree(%s) assigned to object %s" % (current_object.nodetreeName,current_object.name))
+
             return show_nodetree,show_nodetree,current_object
             
             
-            
+
+
 
 
     # Mix-in class for all custom nodes in this tree type.
@@ -340,7 +347,7 @@ def createNodeTree(data):
             print("EXPORT") 
 
         def createProperty(prop):
-            name = "prop_"+prop["name"].replace(" ","_");
+            name = "prop_"+prop["name"].replace(" ","_").replace("/","_").replace("-","_");
             type = prop["type"]
             label = prop.get("label",prop["name"])
             description = prop.get("description",name)
@@ -408,7 +415,7 @@ def createNodeTree(data):
             elif type=="texture":
                 exec("InnerCustomNode.%s=bpy.props.EnumProperty(items=get_icons,update=JSONNodetreeUtils.modalStarter)" % name)
             elif type=="enum":
-                default = prop.get("default",0);               
+                default = int(prop.get("default",0));               
                 elements = []
                 count=0
                 defaultID = None

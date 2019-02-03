@@ -103,6 +103,8 @@ def getById(array,id):
 
     try:
         nt = idCache[id]
+        # try to get the name, as this will throw an exception when the rna-struct is kicked (for what reason...)
+        name = nt.name
         #print("found cached nt with id %s" % id)
         return nt
     except:
@@ -114,3 +116,16 @@ def getById(array,id):
         print("Couldn't find nodetree with id: %s" % id)
     return None
 
+def updateNodeTreeIDCache():
+    print("UPDATING NodeTree IDCACHE (elements before:%s" % len(idCache) )
+    idCache={}
+
+    for nodetree in bpy.data.node_groups:
+        print("%s : %s" % ( nodetree.id, nodetree.name ) )
+        idCache[nodetree.id]=nodetree
+
+    print("Elements afterwards:%s" % len(idCache) )
+
+def overrideAutoNodetree(current_object):
+    print("CUSTOM CHECK:%s" % current_object.name)
+    return None

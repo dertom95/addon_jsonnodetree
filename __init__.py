@@ -96,10 +96,11 @@ class ExportNodetreeOperator(bpy.types.Operator):
 
         return {'FINISHED'}        
 
-class NODE_PT_json_nodetree(bpy.types.Panel):
+## select nodetree for object
+class NODE_PT_json_nodetree_select(bpy.types.Panel):
     bl_space_type = 'NODE_EDITOR'
     bl_region_type = 'UI'
-    bl_label = "JSON-Nodetree"
+    bl_label = "JSON-Nodetree Selector"
 #    bl_options = {'HIDE_HEADER'}
 
     @classmethod
@@ -120,6 +121,26 @@ class NODE_PT_json_nodetree(bpy.types.Panel):
             row = box.row()
             row.prop_search(bpy.context.active_object,"nodetreeName",bpy.data,"node_groups","Nodetree")
             
+        row = layout.row()
+        row.prop(jsonNodes,"autoSelectObjectNodetree",text="autoselect object nodetree")
+
+
+class NODE_PT_json_nodetree_file(bpy.types.Panel):
+    bl_space_type = 'NODE_EDITOR'
+    bl_region_type = 'UI'
+    bl_label = "JSON-Nodetree Loader"
+#    bl_options = {'HIDE_HEADER'}
+
+    @classmethod
+    def poll(cls, context):
+        return True
+
+    def draw(self, context):
+        jsonNodes = bpy.data.worlds[0].jsonNodes
+
+        #nodetree = context.space_data.node_tree
+        #print("TREE:"+str(nodetree))     
+        layout = self.layout
 
         row = layout.row()
         row.prop(jsonNodes,"usageType")
@@ -146,11 +167,10 @@ class NODE_PT_json_nodetree(bpy.types.Panel):
             row = box.row()
             row.prop(jsonNodes,"runtimePort")
             
-        row = layout.row()
-        row.prop(jsonNodes,"autoSelectObjectNodetree",text="autoselect object nodetree")
+        ## TODO: export is not finished needs have a deeeep look. not sure about the state anymore    
+        ##row = layout.row()
+        ##row.operator("nodetree.export")
 
-        row = layout.row()
-        row.operator("nodetree.export")
 
 @persistent
 def load_handler(dummy):
@@ -175,10 +195,42 @@ class NodeTreeCustomData(bpy.types.PropertyGroup):
 classes = [
     ExportNodetreeOperator,
     LoadNodetreeOperator,
-    NODE_PT_json_nodetree,
+    NODE_PT_json_nodetree_file,
+    NODE_PT_json_nodetree_select,
     NodeTreeCustomData,
     ModalOperator    
 ]
+
+# property hooks:
+def updateNodetreeName(self,ctx):
+    print("UPDATED-Nodetreename(%s) self:%s  to %s" % (self.name,type(self), type(ctx)) )
+    if (self.nodetreeId!=-1):
+        ctx.space_data.node_tree = JSONNodetreeUtils.getNodetreeById(self.nodetreeId)
+    else:
+        ctx.space_data.node_tree = None
+    
+def getNodetreeName(self):
+    print("getNodetreeName:self:%s" % type(self))
+    if self.nodetreeId == -1:
+        #print("No nodetree(%s)" % self.name)
+        return ""
+    
+    nodetree = JSONNodetreeUtils.getNodetreeById(self.nodetreeId)
+    if nodetree:
+        return nodetree.name
+    else:
+        return ""
+
+def setNodetreeName(self,value):
+    print("setNodetreeName:self:%s value:%s" % (type(self),value) )
+    if value == "":
+        #print("RESETID")
+        self.nodetreeId = -1
+    else:
+        #print("set %s=%s" % (self.name, str(value) ))
+        nodetree = bpy.data.node_groups[value]
+        self.nodetreeId = JSONNodetreeUtils.getID(nodetree)
+        #print("assigned ID %s" % getID(nodetree))
 
 def register():
     #rxUtils.disposeAll()
@@ -190,35 +242,7 @@ def register():
     for clazz in classes:
         bpy.utils.register_class(clazz)
 
-    # property hooks:
-    def updateNodetreeName(self,ctx):
-        print("UPDATED-Nodetreename(%s) to %s" % (self.name, type(ctx)) )
-        if (self.nodetreeId!=-1):
-            ctx.space_data.node_tree = JSONNodetreeUtils.getNodetreeById(self.nodetreeId)
-        else:
-            ctx.space_data.node_tree = None
-        
-    def getNodetreeName(self):
-       # print("get")
-        if self.nodetreeId == -1:
-            #print("No nodetree(%s)" % self.name)
-            return ""
-        
-        nodetree = JSONNodetreeUtils.getNodetreeById(self.nodetreeId)
-        if nodetree:
-            return nodetree.name
-        else:
-            return ""
-    
-    def setNodetreeName(self,value):
-        if value == "":
-            #print("RESETID")
-            self.nodetreeId = -1
-        else:
-            #print("set %s=%s" % (self.name, str(value) ))
-            nodetree = bpy.data.node_groups[value]
-            self.nodetreeId = JSONNodetreeUtils.getID(nodetree)
-            #print("assigned ID %s" % getID(nodetree))
+
 
     # link the json-ui config data into world object and access it via byp.data.world[0].jsonNodes
     bpy.types.World.jsonNodes=bpy.props.PointerProperty(type=NodeTreeCustomData)
@@ -234,6 +258,9 @@ def register():
     bpy.app.handlers.load_post.append(load_handler)
 
     
+def unregisterSelectorPanel():
+    print("Try to remove the default-nodetree-selector!")
+    bpy.utils.unregister_class(NODE_PT_json_nodetree_select)
 
 
 def unregister():
