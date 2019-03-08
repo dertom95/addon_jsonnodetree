@@ -150,7 +150,7 @@ class MyCustomSocket(NodeSocket):
     # Optional function for drawing the socket input value
     def draw(self, context, layout, node, text):
         if self.is_output or self.is_linked:
-            layout.label(text)
+            layout.label(text=text)
         else:
             layout.prop(self, "my_enum_prop", text=text)
 
@@ -307,7 +307,7 @@ def createNodeTree(data):
 
             # Additional buttons displayed on the node.
             def draw_buttons(self, context, layout):
-                layout.label("Node settings")
+                layout.label(text="Node settings")
 
                 for propName in self.propNames:
                     try:
@@ -317,7 +317,7 @@ def createNodeTree(data):
                     except:
                         propType = self.propTypes[propName]
                         if propType == "texture":
-                            layout.label("texture:")
+                            layout.label(text="texture:")
                             layout.template_icon_view(self,propName)
                         else:
                             # standard view

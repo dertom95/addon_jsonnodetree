@@ -1,8 +1,8 @@
 bl_info = {
     "name": "JSON-Nodetree",
     "author": "Thomas Trocha",
-    "version": (1, 0),
-    "blender": (2, 79, 0),
+    "version": (0, 1, 0),
+    "blender": (2, 80, 0),
     "location": "Nodeeditor > Sidebar > Load JSON-NodeTree",
     "description": "Create nodetrees from json-files",
     "warning": "",
@@ -116,10 +116,10 @@ class NODE_PT_json_nodetree_select(bpy.types.Panel):
 
         if bpy.context.active_object:
             box = layout.box()
-            row = box.label("Object-Nodetree")
+            row = box.label(text="Object-Nodetree")
 
             row = box.row()
-            row.prop_search(bpy.context.active_object,"nodetreeName",bpy.data,"node_groups","Nodetree")
+            row.prop_search(bpy.context.active_object,"nodetreeName",bpy.data,"node_groups",text="Nodetree")
             
         row = layout.row()
         row.prop(jsonNodes,"autoSelectObjectNodetree",text="autoselect object nodetree")
@@ -147,7 +147,7 @@ class NODE_PT_json_nodetree_file(bpy.types.Panel):
         if (jsonNodes.usageType == "from_file"):
             layout.row().separator()
             row = layout.row()
-            row.label("Load JSON-Trees from file")
+            row.label(text="Load JSON-Trees from file")
             box = layout.box()
             row = box.row()
             row.prop(jsonNodes,"path")
@@ -156,14 +156,14 @@ class NODE_PT_json_nodetree_file(bpy.types.Panel):
         elif (jsonNodes.usageType == "from_runtime"):
             layout.row().separator()
             row = layout.row()
-            row.label("Load JSON-Trees from runtime")
+            row.label(text="Load JSON-Trees from runtime")
             box = layout.box()
             row = box.row()
-            row.label("runtime-host:")
+            row.label(text="runtime-host:")
             row = box.row()
             row.prop(jsonNodes,"runtimeHost")
             row = box.row()
-            row.label("runtime-port:")
+            row.label(text="runtime-port:")
             row = box.row()
             row.prop(jsonNodes,"runtimePort")
             
