@@ -181,16 +181,16 @@ def load_handler(dummy):
 
 # all global json-ui configuration come here 
 class NodeTreeCustomData(bpy.types.PropertyGroup):
-    usageType = bpy.props.EnumProperty(items=[
+    usageType : bpy.props.EnumProperty(items=[
         ('from_file','from file','Get nodetrees from static file','FILE_BLANK',0),
         ('from_runtime','from runtime','Get nodetrees dynamically from runtime','ALIGN',1)
     ])
-    runtimeHost   = bpy.props.StringProperty(default="localhost");
-    runtimePort = bpy.props.IntProperty(default=9595);
-    path = bpy.props.StringProperty(subtype="FILE_PATH");
-    autoSelectObjectNodetree = bpy.props.BoolProperty()
+    runtimeHost   : bpy.props.StringProperty(default="localhost");
+    runtimePort : bpy.props.IntProperty(default=9595);
+    path : bpy.props.StringProperty(subtype="FILE_PATH");
+    autoSelectObjectNodetree : bpy.props.BoolProperty()
     # counter for unique ids
-    uuid = bpy.props.IntProperty(default=0)
+    uuid : bpy.props.IntProperty(default=0)
 
 classes = [
     ExportNodetreeOperator,
