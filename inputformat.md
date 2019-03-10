@@ -49,6 +49,7 @@ Sample enum:
 ```json
 {"name":"Node Operation"
 		,"type":"enum"
+        ,"default": 0
 		,"elements":[ // specify the elements
 				{
 					"id":"AND", 
@@ -80,7 +81,7 @@ Sample(same for all types):
 ```
 
 
-On bigger sample with 2 NodeTrees:
+One bigger sample with 2 NodeTrees:
 ```json
 {"trees":[
 {
