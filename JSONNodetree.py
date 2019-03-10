@@ -393,8 +393,12 @@ def createNodeTree(data):
                 step = prop.get("step",1)
                 print("i4 %s"%step) 
                 subtype = prop.get("subtype","NONE")
-                default = prop.get("default",0)
-                print("i8 %s"%default) 
+                default = 0
+                try:
+                    default = int(prop.get("default",0))
+                except:
+                    default = 0
+                print("i8 %s " % default ) 
                 exeStr = "InnerCustomNode.__annotations__['%s']=bpy.props.IntProperty(subtype='%s',name='%s',default=%s,description='%s',min=%s,max=%s,step=%s)" % ( name,subtype,label,default,description,mini,maxi,step )
                 print (exeStr)
                 exec(exeStr)
@@ -430,7 +434,16 @@ def createNodeTree(data):
                     else:
                         descr = "%s - %s" % (count,elem.get("description",""))
                     icon = elem.get("icon","")
-                    elements.append((id,ename,descr,icon,count))
+                    number = count
+                    try:
+                        number = int(elem.get("number",count))
+                        print("FOUND ENUM-Number:%s" % number)
+                        if number==0:
+                            number=count
+                    except:
+                        pass
+                    print("USING NUMBER:%s" % number)
+                    elements.append((id,ename,descr,icon,number))
                    
                    # find the defaultID (but to be sure take the firstID in case we don't get to the real defaultID)
                     if count==default or defaultID==None:

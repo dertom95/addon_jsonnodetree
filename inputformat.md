@@ -55,7 +55,7 @@ Sample enum:
 					"id":"AND", 
 					"name":"AND-Name",
 					"description":"Boolean AND-Operation",
-					"icon":"FILE_MOVIE"
+					"icon":"FILE_MOVIE",
 				},
 				{
 					"id":"OR",
