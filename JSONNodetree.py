@@ -207,12 +207,16 @@ def createNodeTree(data):
             
             show_nodetree = space_data.node_tree
             
+            print("TreeType:%s" % space_data.tree_type)
+
             config = getConfig()
             
             # check if someone have a custom selection for the current node-tree selection
-            overrideNodetree = JSONNodetreeUtils.overrideAutoNodetree(current_object)
+            overrideNodetree = JSONNodetreeUtils.overrideAutoNodetree(current_object,space_data.tree_type,show_nodetree)
 
-            if overrideNodetree:
+            if overrideNodetree=="NOTREE":
+                return None,None,current_object
+            elif overrideNodetree:
                 return overrideNodetree,overrideNodetree,current_object
 
             # automatically select nodetree of the current object?

@@ -126,6 +126,15 @@ def updateNodeTreeIDCache():
 
     print("Elements afterwards:%s" % len(idCache) )
 
-def overrideAutoNodetree(current_object):
-    print("CUSTOM CHECK:%s" % current_object.name)
+def overrideAutoNodetree(current_object,current_treetype,current_tree):
+    print("CUSTOM CHECK:%s %s %s" % (current_object.name,current_treetype,current_tree.name))
     return None
+
+def GetAutoNodetree(space_tree_type,current_object,current_tree):
+    if current_object.nodetreeName in bpy.data.node_groups:
+        # node tree is known
+        show_nodetree = bpy.data.node_groups[current_object.nodetreeName]
+        feedback("found nodetree: %s" % current_object.nodetreeName) 
+    else:
+        # inconsistend data. a nodetree is referenced that is not known
+        feedback("Unknown nodetree(%s) assigned to object %s" % (current_object.nodetreeName,current_object.name))    
