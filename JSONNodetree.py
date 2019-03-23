@@ -95,18 +95,21 @@ def exportNodes(nodetree,onlyValueDifferentFromDefault=False):
             except:
                 print("Couldnt mapback:%s",propName)
                 mapBackName = propName[5:]
-
+            
+            propertyDefault = eval("node.bl_rna.properties['"+propName+"']").default
+            
             prop = { 
          #       "name" : propName[5:],
                 "name" : mapBackName,
                 "value" : propValue(node,propName),
-                "type"  : node.propTypes[propName]
+                "type"  : node.propTypes[propName],
+                "default" : propertyDefault
             }
 
             if onlyValueDifferentFromDefault:
                 try:
                     print("node.bl_rna.properties['"+propName+"'].default")
-                    propertyDefault = eval("node.bl_rna.properties['"+propName+"']").default
+                    
                     if prop["value"]!=str(propertyDefault):
                         # value changed
                         props.append(prop)
@@ -265,6 +268,9 @@ def createNodeTree(data):
             propNames=[]
             propTypes={} # propName=>type(string)
             
+            # for some reason all type I get from node2.bl_rna.properties['prop'] is FloatProperty....a bug? For now keep a separate dict for all defaultValues
+
+            defaultValues ={}
             # TODO: do I need this? I have the name as it was exported already in the label!?
             propNameMapping={} # map property-conformont name with original name (e.g. 'Occlusion_Culling' =>  'Occluision Culling')
 
@@ -317,6 +323,8 @@ def createNodeTree(data):
                         exec("Custom.UI_"+data["id"]+"_"+propName+"(self,context,layout,propName)")
                     except:
                         propType = self.propTypes[propName]
+
+
                         if propType == "texture":
                             layout.label(text="texture:")
                             layout.template_icon_view(self,propName)
@@ -358,7 +366,7 @@ def createNodeTree(data):
             InnerCustomNode.propNameMapping[name]=prop["name"]
 
             print("prop: %s => %s" % (name,type) )
-            
+            default = None
             if type=="float":
                 print("i1") 
                 mini = prop.get("min",-65535.0)
@@ -426,36 +434,49 @@ def createNodeTree(data):
                 elements = []
                 count=0
                 defaultID = None
-                for elem in prop["elements"]:
-                    id = elem.get("id",("%s-%i" % (name,count)))
-                    ename = elem.get("name",("%s-%i" % (name,count)))
-                    if (count == default):
-                       descr = "%s - %s[default]" % (count,elem.get("description",""))
-                    else:
-                        descr = "%s - %s" % (count,elem.get("description",""))
-                    icon = elem.get("icon","")
-                    number = count
-                    try:
-                        number = int(elem.get("number",count))
-                        print("FOUND ENUM-Number:%s" % number)
-                        if number==0:
-                            number=count
-                    except:
-                        pass
-                    print("USING NUMBER:%s" % number)
-                    elements.append((id,ename,descr,icon,number))
-                   
-                   # find the defaultID (but to be sure take the firstID in case we don't get to the real defaultID)
-                    if count==default or defaultID==None:
-                        defaultID=id
 
-                    count = count + 1
+                if (len(prop["elements"])==0):
+                    id = "%s-%i" % (name,count)
+                    ename = "No Elements"
+                    descr = "No Elements"
+                    icon = ""
+                    number = count
+                    defaultID = id
+                    elements.append((id,ename,descr,icon,number))
+                else:
+                    for elem in prop["elements"]:
+                        id = elem.get("id",("%s-%i" % (name,count)))
+                        ename = elem.get("name",("%s-%i" % (name,count)))
+                        if (count == default):
+                            descr = "%s - %s[default]" % (count,elem.get("description",""))
+                        else:
+                            descr = "%s - %s" % (count,elem.get("description",""))
+                        icon = elem.get("icon","")
+                        number = count
+                        try:
+                            number = int(elem.get("number",count))
+                            print("FOUND ENUM-Number:%s" % number)
+                            if number==0:
+                                number=count
+                        except:
+                            pass
+                        print("USING NUMBER:%s" % number)
+                        elements.append((id,ename,descr,icon,number))
+                    
+                    # find the defaultID (but to be sure take the firstID in case we don't get to the real defaultID)
+                        if count==default or defaultID==None:
+                            defaultID=id
+
+                        count = count + 1
 
                 exec("InnerCustomNode.__annotations__['%s']=bpy.props.EnumProperty(name='%s',items=elements,default='%s')" % (name,label,defaultID))
                            
             else:
                 raise Exception("Unknown property-type:"+type)
-    
+
+            if default:
+                InnerCustomNode.defaultValues[name]=default
+
         properties=data.get("props",[])
         try:
             #exec("Custom.UI_sidebar_"+data["id"]+"_"+propName+"(self,context,layout,propName)")
