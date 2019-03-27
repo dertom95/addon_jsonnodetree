@@ -11,6 +11,7 @@ bl_info = {
     }
 
 import os,sys
+import json
 path = os.path.dirname(os.path.realpath(__file__))
 print("__##current_path:"+path)
 sys.path.insert(0, path)
@@ -35,8 +36,8 @@ def processNodetreeFromFile():
     JSONNodetree.ntRegister()
 
 
-def exportNodetree(nodetree):
-    JSONNodetree.exportNodes(nodetree)
+def exportNodetree(nodetree,onlyValueDifferentFromDefault=False):
+    return JSONNodetree.exportNodes(nodetree,onlyValueDifferentFromDefault)
 
 class ModalOperator(bpy.types.Operator):
     bl_idname = "object.modal_operator"
@@ -90,7 +91,11 @@ class ExportNodetreeOperator(bpy.types.Operator):
 
     def execute(self, context):
         for nodetree in bpy.data.node_groups:
-            exportNodetree(nodetree)
+            tree = exportNodetree(nodetree,False)
+            print("TREE:%s" % tree)
+            result = json.dumps(tree, ensure_ascii=False, sort_keys=True, indent=4)
+            print(result)
+            WriteFile(result,bpy.data.worlds[0].jsonNodes.exportPath+"/"+tree["name"]+".json")            
 
         print("FINISHED")
 
@@ -168,8 +173,11 @@ class NODE_PT_json_nodetree_file(bpy.types.Panel):
             row.prop(jsonNodes,"runtimePort")
             
         ## TODO: export is not finished needs have a deeeep look. not sure about the state anymore    
-        ##row = layout.row()
-        ##row.operator("nodetree.export")
+        box = layout.box()
+        row = box.row()
+        row.prop(jsonNodes,"exportPath")
+        row = box.row()
+        row.operator("nodetree.export")
 
 
 @persistent
@@ -185,9 +193,10 @@ class NodeTreeCustomData(bpy.types.PropertyGroup):
         ('from_file','from file','Get nodetrees from static file','FILE_BLANK',0),
         ('from_runtime','from runtime','Get nodetrees dynamically from runtime','ALIGN',1)
     ])
-    runtimeHost   : bpy.props.StringProperty(default="localhost");
+    runtimeHost   : bpy.props.StringProperty(default="localhost")
     runtimePort : bpy.props.IntProperty(default=9595);
-    path : bpy.props.StringProperty(subtype="FILE_PATH");
+    path : bpy.props.StringProperty(subtype="FILE_PATH")
+    exportPath: bpy.props.StringProperty(subtype="FILE_PATH")
     autoSelectObjectNodetree : bpy.props.BoolProperty()
     # counter for unique ids
     uuid : bpy.props.IntProperty(default=0)
@@ -200,6 +209,18 @@ classes = [
     NodeTreeCustomData,
     ModalOperator    
 ]
+
+def WriteFile(data, filepath):
+    try:
+        file = open(filepath, "w")
+    except Exception as e:
+        print("Cannot open file %s %s" % (filepath, e))
+        return
+    try:
+        file.write(data)
+    except Exception as e:
+        print("Cannot write to file %s %s" % (filepath, e))
+    file.close()
 
 # property hooks:
 def updateNodetreeName(self,ctx):

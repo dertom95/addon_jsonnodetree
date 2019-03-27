@@ -119,8 +119,7 @@ def exportNodes(nodetree,onlyValueDifferentFromDefault=False):
                 props.append(prop)
 
     
-    result = json.dumps(tree, ensure_ascii=False)
-    print(result)
+
 
     # 2nd pass create the connections
     #for node in nodetree.nodes:
