@@ -130,6 +130,48 @@ class NODE_PT_json_nodetree_select(bpy.types.Panel):
         row.prop(jsonNodes,"autoSelectObjectNodetree",text="autoselect object nodetree")
 
 
+
+
+def drawJSONFileSettings(self, context):
+    jsonNodes = bpy.data.worlds[0].jsonNodes
+
+    #nodetree = context.space_data.node_tree
+    #print("TREE:"+str(nodetree))     
+    layout = self.layout
+
+    row = layout.row()
+    row.prop(jsonNodes,"usageType")
+    if (jsonNodes.usageType == "from_file"):
+        layout.row().separator()
+        row = layout.row()
+        row.label(text="Load JSON-Trees from file")
+        box = layout.box()
+        row = box.row()
+        row.prop(jsonNodes,"path")
+        row = box.row()
+        row.operator("nodetree.jsonload")
+    elif (jsonNodes.usageType == "from_runtime"):
+        layout.row().separator()
+        row = layout.row()
+        row.label(text="Load JSON-Trees from runtime")
+        box = layout.box()
+        row = box.row()
+        row.label(text="runtime-host:")
+        row = box.row()
+        row.prop(jsonNodes,"runtimeHost")
+        row = box.row()
+        row.label(text="runtime-port:")
+        row = box.row()
+        row.prop(jsonNodes,"runtimePort")
+        
+    ## TODO: export is not finished needs have a deeeep look. not sure about the state anymore    
+    box = layout.box()
+    row = box.row()
+    row.prop(jsonNodes,"exportPath")
+    row = box.row()
+    row.operator("nodetree.export")
+
+
 class NODE_PT_json_nodetree_file(bpy.types.Panel):
     bl_space_type = 'NODE_EDITOR'
     bl_region_type = 'UI'
@@ -141,44 +183,13 @@ class NODE_PT_json_nodetree_file(bpy.types.Panel):
         return True
 
     def draw(self, context):
-        jsonNodes = bpy.data.worlds[0].jsonNodes
+        drawJSONFileSettings(self,context)
 
-        #nodetree = context.space_data.node_tree
-        #print("TREE:"+str(nodetree))     
-        layout = self.layout
+class IV_Preferences(bpy.types.AddonPreferences):
+    bl_idname = __name__
 
-        row = layout.row()
-        row.prop(jsonNodes,"usageType")
-        if (jsonNodes.usageType == "from_file"):
-            layout.row().separator()
-            row = layout.row()
-            row.label(text="Load JSON-Trees from file")
-            box = layout.box()
-            row = box.row()
-            row.prop(jsonNodes,"path")
-            row = box.row()
-            row.operator("nodetree.jsonload")
-        elif (jsonNodes.usageType == "from_runtime"):
-            layout.row().separator()
-            row = layout.row()
-            row.label(text="Load JSON-Trees from runtime")
-            box = layout.box()
-            row = box.row()
-            row.label(text="runtime-host:")
-            row = box.row()
-            row.prop(jsonNodes,"runtimeHost")
-            row = box.row()
-            row.label(text="runtime-port:")
-            row = box.row()
-            row.prop(jsonNodes,"runtimePort")
-            
-        ## TODO: export is not finished needs have a deeeep look. not sure about the state anymore    
-        box = layout.box()
-        row = box.row()
-        row.prop(jsonNodes,"exportPath")
-        row = box.row()
-        row.operator("nodetree.export")
-
+    def draw(self, context):
+        drawJSONFileSettings(self,context)
 
 @persistent
 def load_handler(dummy):
@@ -207,7 +218,8 @@ classes = [
     NODE_PT_json_nodetree_file,
     NODE_PT_json_nodetree_select,
     NodeTreeCustomData,
-    ModalOperator    
+    ModalOperator,
+    IV_Preferences    
 ]
 
 def WriteFile(data, filepath):
