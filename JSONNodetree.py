@@ -71,7 +71,7 @@ def exportScene(scene):
     for obj in scene.objects:
         if (obj.nodetreeName==""):
             continue
-            
+
         objMap = {
             "objectName": obj.name,
             "nodetreeName": obj.nodetreeName,
@@ -251,25 +251,29 @@ def createNodeTree(data):
             config = getConfig()
             
             # check if someone have a custom selection for the current node-tree selection
+            # use this mechanism to use a custom nodetree selection in your addon
             overrideNodetree = JSONNodetreeUtils.overrideAutoNodetree(current_object,space_data.tree_type,show_nodetree)
-
             if overrideNodetree=="NOTREE":
                 return None,None,current_object
             elif overrideNodetree:
                 return overrideNodetree,overrideNodetree,current_object
 
             # automatically select nodetree of the current object?
-            if current_object.nodetreeName!="" and config.autoSelectObjectNodetree == True:
-                # check if the corresponding nodetree acutally exists
-                if current_object.nodetreeName in bpy.data.node_groups:
-                    # node tree is known
-                    show_nodetree = bpy.data.node_groups[current_object.nodetreeName]
-                    feedback("found nodetree: %s" % current_object.nodetreeName) 
-                else:
-                    # inconsistend data. a nodetree is referenced that is not known
-                    feedback("Unknown nodetree(%s) assigned to object %s" % (current_object.nodetreeName,current_object.name))
+            if config.autoSelectObjectNodetree == True:
+                if current_object.nodetreeName!="":
+                    # check if the corresponding nodetree acutally exists
+                    if current_object.nodetreeName in bpy.data.node_groups:
+                        # node tree is known
+                        show_nodetree = bpy.data.node_groups[current_object.nodetreeName]
+                        return show_nodetree,show_nodetree,current_object
+                        feedback("found nodetree: %s" % current_object.nodetreeName) 
+                    else:
+                        # inconsistend data. a nodetree is referenced that is not known
+                        feedback("Unknown nodetree(%s) assigned to object %s" % (current_object.nodetreeName,current_object.name))
 
-            return show_nodetree,show_nodetree,current_object
+                return None,None,current_object
+            
+            return None,None,current_object
             
             
 
