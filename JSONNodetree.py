@@ -65,14 +65,33 @@ def exportNodes(nodetree,onlyValueDifferentFromDefault=False):
     tree = {
         "name" : nodetree.name,
         "nodes": [],
-        "connections" : {}
+        "links" : []
     }
+    print("1")
     exportNodes = tree["nodes"]
+    links = tree["links"]
 
+    print("11")
+    for ntlink in nodetree.links:
+        link = {
+            "from_node"     : ntlink.from_node.bl_idname,
+            "from_socket"   : ntlink.from_socket.name,
+            "to_node"       : ntlink.to_node.bl_idname,
+            "to_socket"     : ntlink.to_socket.name
+        }
+
+        links.append(link)
+
+    print("111")
     nodeCache = {}
     id = 0
     # first pass create the nodes
     for node in nodetree.nodes:
+        if (node.bl_idname=="NodeReroute"):
+            # ignore reroute node (this things that separate connections)
+            continue
+
+        print("export NODE:%s" % node.name)
         dictNode = {
             "id"    :   id,
             "type"  :   node.bl_idname,
