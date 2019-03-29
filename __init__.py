@@ -137,7 +137,15 @@ class NODE_PT_json_nodetree_select(bpy.types.Panel):
         row = layout.row()
         row.prop(jsonNodes,"autoSelectObjectNodetree",text="autoselect object nodetree")
 
-
+        row = layout.row()
+        
+        row.prop(jsonNodes,"automaticFakeuser",text="automatic set fake user to assigned nodetrees")        
+        
+        box = layout.row().box()
+        row = box.row()
+        row.label(text="For developers:")
+        row = box.row()
+        row.prop(jsonNodes,"autoputHooks",text="output called hooks on stdout")
 
 
 def drawJSONFileSettings(self, context):
@@ -148,7 +156,7 @@ def drawJSONFileSettings(self, context):
     layout = self.layout
 
     row = layout.row()
-    row.prop(jsonNodes,"usageType")
+    #row.prop(jsonNodes,"usageType")
     if (jsonNodes.usageType == "from_file"):
         layout.row().separator()
         row = layout.row()
@@ -219,6 +227,9 @@ class NodeTreeCustomData(bpy.types.PropertyGroup):
     autoSelectObjectNodetree : bpy.props.BoolProperty()
     # counter for unique ids
     uuid : bpy.props.IntProperty(default=0)
+    automaticFakeuser : bpy.props.BoolProperty(default=True,description="add a fakeuser to the nodetrees that get assigned")
+    autoputHooks : bpy.props.BoolProperty(default=True,description="FOR DEVELOPERS: output the hooks/callbacks tried to be called for overriding ui and behaviour")
+
 
 classes = [
     ExportNodetreeOperator,
@@ -271,6 +282,8 @@ def setNodetreeName(self,value):
         #print("set %s=%s" % (self.name, str(value) ))
         nodetree = bpy.data.node_groups[value]
         self.nodetreeId = JSONNodetreeUtils.getID(nodetree)
+        if bpy.data.worlds[0].jsonNodes.automaticFakeuser:
+            nodetree.use_fake_user=True
         #print("assigned ID %s" % getID(nodetree))
 
 def register():
