@@ -61,6 +61,27 @@ def propValue(node,propName):
     else:
         return str(prop)
 
+def exportScene(scene):
+    objectNodetreeMapping = {
+        "sceneName" : scene.name,
+        "objectMapping" : []
+    }
+
+    objMapping = objectNodetreeMapping["objectMapping"]
+    for obj in scene.objects:
+        if (obj.nodetreeName==""):
+            continue
+            
+        objMap = {
+            "objectName": obj.name,
+            "nodetreeName": obj.nodetreeName,
+            "nodetreeFilename": "nt_"+obj.nodetreeName
+        }
+        objMapping.append(objMap)
+
+    return objectNodetreeMapping
+
+
 def exportNodes(nodetree,onlyValueDifferentFromDefault=False):
     tree = {
         "name" : nodetree.name,

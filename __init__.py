@@ -36,6 +36,9 @@ def processNodetreeFromFile():
     JSONNodetree.ntRegister()
 
 
+def exportScene(scene):
+    return JSONNodetree.exportScene(scene)
+
 def exportNodetree(nodetree,onlyValueDifferentFromDefault=False):
     return JSONNodetree.exportNodes(nodetree,onlyValueDifferentFromDefault)
 
@@ -95,7 +98,12 @@ class ExportNodetreeOperator(bpy.types.Operator):
             print("TREE:%s" % tree)
             result = json.dumps(tree, ensure_ascii=False, sort_keys=True, indent=4)
             print(result)
-            WriteFile(result,bpy.data.worlds[0].jsonNodes.exportPath+"/"+tree["name"]+".json")            
+            WriteFile(result,bpy.data.worlds[0].jsonNodes.exportPath+"/nt_"+tree["name"]+".json")            
+
+        for scene in bpy.data.scenes:
+            sceneExport = exportScene(scene)
+            result = json.dumps(sceneExport, ensure_ascii=False, sort_keys=True, indent=4)
+            WriteFile(result,bpy.data.worlds[0].jsonNodes.exportPath+"/scene_"+tree["name"]+".json")     
 
         print("FINISHED")
 
