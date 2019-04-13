@@ -294,7 +294,17 @@ def createNodeTree(data):
             return context.space_data.tree_type == data["id"]
         
     def createNode(data):
+        try:
+            #exec("Custom.UI_sidebar_"+data["id"]+"_"+propName+"(self,context,layout,propName)")
+            print('data["props"].extend(Custom.UI_props_'+data["id"]+'() )')
+            exec('data["props"].extend(Custom.UI_props_'+data["id"]+'() )')
+            print("success")
+        except:
+            print("COULD NOT")
+            pass
+
         print("CREATE NODE:"+str(data))
+
         class InnerCustomNode(Node, MyCustomTreeNode):
             # === Basics ===
             # Description string
@@ -531,12 +541,7 @@ def createNodeTree(data):
                 InnerCustomNode.defaultValues[name]=default
 
         properties=data.get("props",[])
-        try:
-            #exec("Custom.UI_sidebar_"+data["id"]+"_"+propName+"(self,context,layout,propName)")
-            print('properties.extend(Custom.UI_props_'+data["id"]+' )')
-            exec('properties.extend(Custom.UI_props_'+data["id"]+' )')
-        except:
-            pass
+
 
         items = []
         for prop in properties:
