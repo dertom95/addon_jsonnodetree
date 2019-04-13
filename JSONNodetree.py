@@ -20,6 +20,8 @@ class DefaultCollection(bpy.types.PropertyGroup):
 #classes = [DefaultCollection]
 classes = []
 node_categories = []
+# this data object (dictionary) is filled during nodetree-creation
+globalData=None
 
 # function to get textures for template_icon_preview (thx, andreas esau)
 def get_icons(self,context):
@@ -246,36 +248,28 @@ def createNodeTree(data):
             
             show_nodetree = space_data.node_tree
             
-            print("TreeType:%s" % space_data.tree_type)
-
             config = getConfig()
             
             # check if someone have a custom selection for the current node-tree selection
             # use this mechanism to use a custom nodetree selection in your addon
             overrideNodetree = JSONNodetreeUtils.overrideAutoNodetree(current_object,space_data.tree_type,show_nodetree)
-            print("1")
+
             if overrideNodetree=="NOTREE":
-                print("21")
                 return None,None,current_object
             elif overrideNodetree:
-                print("21")
                 return overrideNodetree,overrideNodetree,current_object
 
             # automatically select nodetree of the current object?
             if config.autoSelectObjectNodetree == True:
-                print("23")
                 if current_object.nodetreeName!="":
-                    print("31")
 
                     # check if the corresponding nodetree acutally exists
                     if current_object.nodetreeName in bpy.data.node_groups:
-                        print("331")
                         # node tree is known
                         show_nodetree = bpy.data.node_groups[current_object.nodetreeName]
                         return show_nodetree,show_nodetree,current_object
                         feedback("found nodetree: %s" % current_object.nodetreeName) 
                     else:
-                        print("331")
                         # inconsistend data. a nodetree is referenced that is not known
                         feedback("Unknown nodetree(%s) assigned to object %s" % (current_object.nodetreeName,current_object.name))
 
@@ -283,9 +277,6 @@ def createNodeTree(data):
             
             return show_nodetree,show_nodetree,current_object
             
-            
-
-
 
 
     # Mix-in class for all custom nodes in this tree type.
@@ -374,8 +365,11 @@ def createNodeTree(data):
                 for propName in self.propNames:
                     try:
                         # override? Custom.[NodeName]_[PropName]
-                        print('exec("Custom.UI_'+data["id"]+"_"+propName+"(self,context,layout,propName)\")")
+                        if bpy.data.worlds[0].jsonNodes.outputHooks:
+                            print("HOOK UI: Node("+data["id"]+"): Custom.UI_"+data["id"]+"_"+propName+"(self,context,layout,propName)")
+
                         exec("Custom.UI_"+data["id"]+"_"+propName+"(self,context,layout,propName)")
+                        #print("FOUND HOOK:Custom.UI_"+data["id"]+"_"+propName+"(self,context,layout,propName)")
                     except:
                         propType = self.propTypes[propName]
 
@@ -385,7 +379,19 @@ def createNodeTree(data):
                             layout.template_icon_view(self,propName)
                         else:
                             # standard view
-                            layout.prop(self,propName) 
+                            layout.prop(self,propName)
+
+                try:
+                    # here you have the chance to add additional buttons
+                    if bpy.data.worlds[0].jsonNodes.outputHooks:
+                        print("HOOK UI additional props: Node("+data["id"]+"): Custom.UI_"+data['id']+"(self,context,layout,propName)")
+
+                    exec("Custom.UI_"+data["id"]+"(self,context,layout)")
+                    #print("FOUND NODE-Hook Custom.UI_"+data["id"]+"(self,context,layout)")
+                except:
+                    pass
+
+                     
 
             # Detail buttons in the sidebar.
             # If this function is not defined, the draw_buttons function is used instead
@@ -393,7 +399,8 @@ def createNodeTree(data):
                 for propName in self.propNames:
                     try:
                         # override? Custom.[NodeName]_[PropName]
-                        #print("TRYING: Custom.UI_"+data["id"]+"_"+propName+"(self,context,layout)")
+                        if bpy.data.worlds[0].jsonNodes.outputHooks:
+                            print("HOOK UI: SideBar("+data["id"]+"): Custom.UI_"+data["id"]+"_"+propName+"(self,context,layout)")
                         exec("Custom.UI_sidebar_"+data["id"]+"_"+propName+"(self,context,layout,propName)")
                     except:
                         propType = self.propTypes[propName]
@@ -401,7 +408,16 @@ def createNodeTree(data):
                             layout.template_icon_view(self,propName)
                         else:
                             # standard view
-                            layout.prop(self,propName) 
+                            layout.prop(self,propName)
+
+                try:
+                    # here you have the chance to add additional buttons
+                    if bpy.data.worlds[0].jsonNodes.outputHooks:
+                        print("HOOK UI additional props: Node("+data["id"]+"): Custom.UI_"+data['id']+"(self,context,layout,propName)")
+
+                    exec("Custom.UI_sidebar_"+data["id"]+"(self,context,layout)")
+                except:
+                    pass 
 
             # Optional: custom label
             # Explicit user label overrides this, but here we can define a label dynamically
@@ -423,60 +439,42 @@ def createNodeTree(data):
             print("prop: %s => %s" % (name,type) )
             default = None
             if type=="float":
-                print("i1") 
                 mini = prop.get("min",-65535.0)
-                print("i2") 
                 maxi = prop.get("max",65535.0)
-                print("i3") 
                 step = prop.get("step",3)
-                print("i4") 
                 subtype = prop.get("subtype","NONE")
-                print("i5") 
                 precision = prop.get("precision",3)
-                print("i6") 
                 unit = prop.get("unit","NONE")
-                print("i7") 
                 default = prop.get("default",0.0)
                 exec("InnerCustomNode.__annotations__['%s']=bpy.props.FloatProperty(subtype='%s',name='%s',default=%s,description='%s',min=%s,max=%s,step=%s,unit='%s',precision=%s)" % ( name,subtype,label,default,description,mini,maxi,step,unit,precision ))
-                print("i8-ok");
             elif type=="string":
                 default = prop.get("default","")
                 exec("InnerCustomNode.__annotations__['%s']=bpy.props.StringProperty(name='%s',default='%s',description='%s')" % ( name,label,default,description ))
-                print("string ok")
             elif type=="bool":
                 default = prop.get("default","False")=="true"
-                print("BoolDefault:%s" % default)
                 exec("InnerCustomNode.__annotations__['%s']=bpy.props.BoolProperty(name='%s',default=%s,description='%s')" % ( name,label,default,description ))
             elif type=="int":
-                print("i1") 
                 mini = prop.get("min",-65535)
-                print("i2 %s"%mini) 
                 maxi = prop.get("max",65535)
-                print("i3 %s"%maxi) 
                 step = prop.get("step",1)
-                print("i4 %s"%step) 
                 subtype = prop.get("subtype","NONE")
                 default = 0
                 try:
                     default = int(prop.get("default",0))
                 except:
                     default = 0
-                print("i8 %s " % default ) 
                 exeStr = "InnerCustomNode.__annotations__['%s']=bpy.props.IntProperty(subtype='%s',name='%s',default=%s,description='%s',min=%s,max=%s,step=%s)" % ( name,subtype,label,default,description,mini,maxi,step )
-                print (exeStr)
                 exec(exeStr)
             elif type=="vector2":
                 default = prop.get("default",(0.0,0.0));
                 exec("InnerCustomNode.__annotations__['%s']=bpy.props.FloatVectorProperty(name='%s',default=%s,size=2,description='%s')" % ( name,label,default,description ))
             elif type=="vector3":
                 default = prop.get("default",None) or (0.0,0.0,0.0)
-                #print("DEFAULT %s" % str(default))
                 exec("InnerCustomNode.__annotations__['%s']=bpy.props.FloatVectorProperty(name='%s',default=%s,size=3,description='%s')" % ( name,label,default,description ))
             elif type=="vector4":
                 default = eval(prop.get("default",(0.0,0.0,0.0,0.0)));
                 exec("InnerCustomNode.__annotations__['%s']=bpy.props.FloatVectorProperty(name='%s',default=%s,size=4,description='%s')" % ( name,label,default,description ))
             elif type=="color":
-                #print("InnerCustomNode.%s=bpy.props.FloatVectorProperty(name='%s',default=%s,size=4,subtype='COLOR',description='%s',min=0.0,max=1.0 )" % ( name,label,default,description))
                 default = eval(prop.get("default",(1.0,1.0,1.0,1.0)));
                 exec("InnerCustomNode.__annotations__['%s']=bpy.props.FloatVectorProperty(name='%s',default=%s,size=4,subtype='COLOR',description='%s',min=0.0,max=1.0 )" % ( name,label,default,description))
             elif type=="collection":
@@ -535,8 +533,8 @@ def createNodeTree(data):
         properties=data.get("props",[])
         try:
             #exec("Custom.UI_sidebar_"+data["id"]+"_"+propName+"(self,context,layout,propName)")
-            print('properties.extend(Custom.UI_'+data["id"]+'_props() )')
-            exec('properties.extend(Custom.UI_'+data["id"]+'_props() )')
+            print('properties.extend(Custom.UI_props_'+data["id"]+' )')
+            exec('properties.extend(Custom.UI_props_'+data["id"]+' )')
         except:
             pass
 
@@ -590,20 +588,53 @@ def createNodeTrees(data):
     ntUnregister()
     global classes
     global node_categories
+    global globalData
     
     classes=[]
     node_categories=[]
+
+    if "globalData" in data:
+        globalData = data["globalData"]
+    else:
+        globalData = None
+
+    for customUI in data["customUI"]:
+        try:
+            customUIScript = base64.b64decode(customUI)
+            customUIScript = customUIScript.decode("utf-8")
+            print("CUSTOMUI:"+customUIScript )
+            exec(customUIScript)
+            print("FINISHED CUSTOMUI")
+            print("TYPE: "+str(type(Custom)))
+        except:
+            print("Something went wrong with customui (base64)")
+
+    customUIFile = bpy.data.worlds[0].jsonNodes.customUIFile
+    if customUIFile!="":
+        print("try to load customfile:"+customUIFile)
+        try:
+            customuiFileData = open(customUIFile).read();
+            print("CUSTOMUI+++++++++++++++++++++++++-------------------_");
+            print(customuiFileData)
+            if customuiFileData:
+                print("\nTRY TO EXECUTE\n")
+                exec(customuiFileData)
+                print("successs")
+
+        except NameError as err:
+            print("Could not process customUI-file %s" % data["customUI-file"])
+            print("Name error:"+str(err))
+        except RuntimeError as rer:
+            print("Could not process customUI-file %s" % data["customUI-file"])
+            print("RuntimeError:%s" % str(rer))
+        except:
+            print("Could not process customUI-file %s" % data["customUI-file"])
+            e = sys.exc_info()[0]
+            print("error:"+str(e))
+
     # create nodetrees
     for nodetree in data["trees"]:
-        createNodeTree(nodetree)
-    for customUI in data["customUI"]:
-        customUIScript = base64.b64decode(customUI)
-        customUIScript = customUIScript.decode("utf-8")
-        print("CUSTOMUI:"+customUIScript )
-        exec(customUIScript)
-        print("FINISHED CUSTOMUI")
-        print("TYPE: "+str(type(Custom)))
-
+        createNodeTree(nodetree)            
 
     # create categories
     
@@ -642,12 +673,24 @@ categoryItems = []
 
 def ntRegister():
     from bpy.utils import register_class
+
+    print("1")
+
+    try:
+        print("__ää REGISTER:%s" % str(Custom.UI_registerClasses))
+        classes.extend(Custom.UI_registerClasses)
+        print("FOUND ADDITIONAL CLASSES:"+str(Custom.UI_registerClasses))
+    except:
+        pass
+
     for cls in classes:
         try:
             print("UNREGISTER:"+str(cls))
             bpy.utils.unregister_class(cls)
         except NameError as err:
             print("Name error:"+str(err))
+        except KeyError as ker:
+            print("KeyError:%s" % str(ker))
         except RuntimeError as rer:
             print("RuntimeError:%s" % str(rer))
         except:

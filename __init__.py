@@ -28,11 +28,15 @@ from bpy.app.handlers import persistent
 #JSONNodeServer.startServer()
 
 
+
 def processNodetreeFromFile():
     jsonPath = bpy.data.worlds[0].jsonNodes.path
     print("LOAD NODETREEs from %s" % (jsonPath))
     jsonData = JSONNodetree.loadJSON(jsonPath)
-    JSONNodetree.createNodeTrees(jsonData)		
+    JSONNodetree.createNodeTrees(jsonData)
+
+
+
     JSONNodetree.ntRegister()
 
 
@@ -145,7 +149,7 @@ class NODE_PT_json_nodetree_select(bpy.types.Panel):
         row = box.row()
         row.label(text="For developers:")
         row = box.row()
-        row.prop(jsonNodes,"autoputHooks",text="output called hooks on stdout")
+        row.prop(jsonNodes,"outputHooks",text="output called hooks on stdout")
 
 
 def drawJSONFileSettings(self, context):
@@ -165,7 +169,11 @@ def drawJSONFileSettings(self, context):
         row = box.row()
         row.prop(jsonNodes,"path")
         row = box.row()
+        row.prop(jsonNodes,"customUIFile")
+        row = box.row()
         row.operator("nodetree.jsonload")
+
+        
     elif (jsonNodes.usageType == "from_runtime"):
         layout.row().separator()
         row = layout.row()
@@ -228,8 +236,8 @@ class NodeTreeCustomData(bpy.types.PropertyGroup):
     # counter for unique ids
     uuid : bpy.props.IntProperty(default=0)
     automaticFakeuser : bpy.props.BoolProperty(default=True,description="add a fakeuser to the nodetrees that get assigned")
-    autoputHooks : bpy.props.BoolProperty(default=True,description="FOR DEVELOPERS: output the hooks/callbacks tried to be called for overriding ui and behaviour")
-
+    outputHooks : bpy.props.BoolProperty(default=False,description="FOR DEVELOPERS: output the hooks/callbacks tried to be called for overriding ui and behaviour")
+    customUIFile : bpy.props.StringProperty(subtype="FILE_PATH")
 
 classes = [
     ExportNodetreeOperator,
@@ -262,7 +270,7 @@ def updateNodetreeName(self,ctx):
         ctx.space_data.node_tree = None
     
 def getNodetreeName(self):
-    print("getNodetreeName:self:%s" % type(self))
+    #print("getNodetreeName:self:%s" % type(self))
     if self.nodetreeId == -1:
         #print("No nodetree(%s)" % self.name)
         return ""

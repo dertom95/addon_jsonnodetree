@@ -127,8 +127,8 @@ def updateNodeTreeIDCache():
     print("Elements afterwards:%s" % len(idCache) )
 
 def overrideAutoNodetree(current_object,current_treetype,current_tree):
-    if (current_object and current_tree):
-        print("CUSTOM CHECK:%s %s %s" % (current_object.name,current_treetype,current_tree.name))
+#    if (current_object and current_tree):
+#        print("CUSTOM CHECK:%s %s %s" % (current_object.name,current_treetype,current_tree.name))
     return None
 
 def GetAutoNodetree(space_tree_type,current_object,current_tree):
