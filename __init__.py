@@ -307,10 +307,10 @@ preview_collections = {}
 
 def register():
     #rxUtils.disposeAll()
-    try:
-        unregister()
-    except:
-        pass
+    #try:
+    #    unregister()
+    #except:
+    #    pass
 
 
     # Note that preview collections returned by bpy.utils.previews
@@ -323,7 +323,8 @@ def register():
     #my_icons_dir = os.path.join(os.path.dirname(__file__), "icons")
 
 
-    preview_collections["main"] = JSONNodetreeUtils.pcoll
+    if not "main" in preview_collections:
+        preview_collections["main"] = JSONNodetreeUtils.pcoll
 
 
 
@@ -353,9 +354,9 @@ def unregisterSelectorPanel():
 
 def unregister():
 
-    for pcoll in preview_collections.values():
-        bpy.utils.previews.remove(pcoll)
-    preview_collections.clear()
+    #for pcoll in preview_collections.values():
+    #    bpy.utils.previews.remove(pcoll)
+    #preview_collections.clear()
 
 
     for clazz in classes:
