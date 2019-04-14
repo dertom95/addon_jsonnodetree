@@ -1,3 +1,5 @@
+# Image/Icon-Preview https://docs.blender.org/api/blender2.8/bpy.utils.previews.html?highlight=preview#module-bpy.utils.previews
+# UI-Layout 2.8: https://docs.blender.org/api/blender2.8/bpy.types.UILayout.html?highlight=uilayout
 bl_info = {
     "name": "JSON-Nodetree",
     "author": "Thomas Trocha",
@@ -294,12 +296,36 @@ def setNodetreeName(self,value):
             nodetree.use_fake_user=True
         #print("assigned ID %s" % getID(nodetree))
 
+
+
+# We can store multiple preview collections here,
+# however in this example we only store "main"
+preview_collections = {}
+
+
+
+
 def register():
     #rxUtils.disposeAll()
     try:
         unregister()
     except:
         pass
+
+
+    # Note that preview collections returned by bpy.utils.previews
+    # are regular py objects - you can use them to store custom data.
+    import bpy.utils.previews
+    JSONNodetreeUtils.pcoll = bpy.utils.previews.new()
+
+    # path to the folder where the icon is
+    # the path is calculated relative to this py file inside the addon folder
+    #my_icons_dir = os.path.join(os.path.dirname(__file__), "icons")
+
+
+    preview_collections["main"] = JSONNodetreeUtils.pcoll
+
+
 
     for clazz in classes:
         bpy.utils.register_class(clazz)
@@ -326,6 +352,12 @@ def unregisterSelectorPanel():
 
 
 def unregister():
+
+    for pcoll in preview_collections.values():
+        bpy.utils.previews.remove(pcoll)
+    preview_collections.clear()
+
+
     for clazz in classes:
         bpy.utils.unregister_class(clazz)
 

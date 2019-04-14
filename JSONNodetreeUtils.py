@@ -2,6 +2,8 @@ import bpy
 
 idCache = {}
 
+pcoll = None
+
 class Data:
     pass
 

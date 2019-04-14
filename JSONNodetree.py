@@ -298,9 +298,8 @@ def createNodeTree(data):
             #exec("Custom.UI_sidebar_"+data["id"]+"_"+propName+"(self,context,layout,propName)")
             print('data["props"].extend(Custom.UI_props_'+data["id"]+'() )')
             exec('data["props"].extend(Custom.UI_props_'+data["id"]+'() )')
-            print("success")
+            print("successully added custom-props for %s" % data["id"])
         except:
-            print("COULD NOT")
             pass
 
         print("CREATE NODE:"+str(data))
@@ -384,9 +383,11 @@ def createNodeTree(data):
                         propType = self.propTypes[propName]
 
 
-                        if propType == "texture":
+                        if propType == "enumPreview":
                             layout.label(text="texture:")
-                            layout.template_icon_view(self,propName)
+                            print("Check: %s %s" % (self.name,propName))
+                            layout.template_icon_view(self,propName,show_labels=True)
+                            layout.prop(self,propName)
                         else:
                             # standard view
                             layout.prop(self,propName)
@@ -492,7 +493,7 @@ def createNodeTree(data):
                 exec("InnerCustomNode.__annotations__['%s']=bpy.props.CollectionProperty(type=DefaultCollection,description='%s')" % ( name ))
  #           elif type=="texture":
  #               exec("InnerCustomNode.__annotations__['%s']=bpy.props.EnumProperty(items=get_icons,update=JSONNodetreeUtils.modalStarter)" % name)
-            elif type=="enum":
+            elif type=="enum" or type=="enumPreview":
                 default = int(prop.get("default",0));               
                 elements = []
                 count=0
@@ -506,31 +507,83 @@ def createNodeTree(data):
                     number = count
                     defaultID = id
                     elements.append((id,ename,descr,icon,number))
+                    type="enum"
                 else:
-                    for elem in prop["elements"]:
-                        id = elem.get("id",("%s-%i" % (name,count)))
-                        ename = elem.get("name",("%s-%i" % (name,count)))
-                        if (count == default):
-                            descr = "%s - %s[default]" % (count,elem.get("description",""))
-                        else:
-                            descr = "%s - %s" % (count,elem.get("description",""))
-                        icon = elem.get("icon","")
-                        number = count
-                        try:
-                            number = int(elem.get("number",count))
-                            print("FOUND ENUM-Number:%s" % number)
-                            if number==0:
-                                number=count
-                        except:
-                            pass
-                        print("USING NUMBER:%s" % number)
-                        elements.append((id,ename,descr,icon,number))
-                    
-                    # find the defaultID (but to be sure take the firstID in case we don't get to the real defaultID)
-                        if count==default or defaultID==None:
-                            defaultID=id
+                    if type=="enum":
+                        for elem in prop["elements"]:
+                            id = elem.get("id",("%s-%i" % (name,count)))
+                            ename = elem.get("name",("%s-%i" % (name,count)))
+                            if (count == default):
+                                descr = "%s - %s[default]" % (count,elem.get("description",""))
+                            else:
+                                descr = "%s - %s" % (count,elem.get("description",""))
+                            icon = elem.get("icon","")
+                            number = count
+                            try:
+                                number = int(elem.get("number",count))
+                                print("FOUND ENUM-Number:%s" % number)
+                                if number==0:
+                                    number=count
+                            except:
+                                pass
+                            print("USING NUMBER:%s" % number)
+                            elements.append((id,ename,descr,icon,number))
+                        
+                        # find the defaultID (but to be sure take the firstID in case we don't get to the real defaultID)
+                            if count==default or defaultID==None:
+                                defaultID=id
 
-                        count = count + 1
+                            count = count + 1
+                    else: # preview-enum
+                        try:
+                            pcoll = JSONNodetreeUtils.pcoll
+                            for elem in prop["elements"]:
+                                filename = elem.get("description",None)
+                                if filename:
+                                    thumb = pcoll.load(filename,filename,'IMAGE')
+                                    print("THUMB: %s - %s" % (filename,str(thumb.icon_id)))
+                                    if not thumb:
+                                        print("SOMETHING WENT WRONG WITH THUMB CREATION")
+
+                                    id = elem.get("id",("%s-%i" % (name,count)))
+                                    ename = elem.get("name",("%s-%i" % (name,count)))
+                                    if (count == default):
+                                        descr = "%s - %s[default]" % (count,elem.get("description",""))
+                                    else:
+                                        descr = "%s - %s" % (count,elem.get("description",""))
+                                    icon = elem.get("icon","")
+                                    number = count
+                                    try:
+                                        number = int(elem.get("number",count))
+                                        print("FOUND ENUM-Number:%s thumbid %s" % (number,str(thumb.icon_id)))
+                                        if number==0:
+                                            number=count
+                                    except:
+                                        pass
+                                    print("USING NUMBER:%s" % number)
+                                    elements.append((id,ename,descr,thumb.icon_id,number))
+
+                            # find the defaultID (but to be sure take the firstID in case we don't get to the real defaultID)
+                                if count==default or defaultID==None:
+                                    defaultID=id
+
+                                count = count + 1     
+
+                        except NameError as err:
+                            print ("error: NameError %s",str(err))
+                            traceback.print_exc(file=sys.stdout)                
+                        except TypeError as terr:
+                            print ("error: TypeError %s",str(terr))
+                            traceback.print_exc(file=sys.stdout)                
+                        except AttributeError as aerr:
+                            print ("attributeError: %s",str(aerr))
+                        except:
+                            print("error creating property from:%s" % prop["name"])
+                            e = sys.exc_info()[0]
+                            print("exception %s" % str(e))                            
+                        
+                   
+
 
                 exec("InnerCustomNode.__annotations__['%s']=bpy.props.EnumProperty(name='%s',items=elements,default='%s')" % (name,label,defaultID))
                            
