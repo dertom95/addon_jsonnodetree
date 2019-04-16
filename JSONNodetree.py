@@ -71,13 +71,13 @@ def exportScene(scene):
 
     objMapping = objectNodetreeMapping["objectMapping"]
     for obj in scene.objects:
-        if (obj.nodetreeName==""):
+        if (not obj.nodetree):
             continue
 
         objMap = {
             "objectName": obj.name,
-            "nodetreeName": obj.nodetreeName,
-            "nodetreeFilename": "nt_"+obj.nodetreeName
+            "nodetreeName": obj.nodetree.name,
+            "nodetreeFilename": "nt_"+obj.nodetree.name
         }
         objMapping.append(objMap)
 
@@ -261,17 +261,17 @@ def createNodeTree(data):
 
             # automatically select nodetree of the current object?
             if config.autoSelectObjectNodetree == True:
-                if current_object.nodetreeName!="":
+                if current_object.nodetree:
 
                     # check if the corresponding nodetree acutally exists
-                    if current_object.nodetreeName in bpy.data.node_groups:
+                    if current_object.nodetree in bpy.data.node_groups:
                         # node tree is known
-                        show_nodetree = bpy.data.node_groups[current_object.nodetreeName]
+                        show_nodetree = bpy.data.node_groups[current_object.nodetree]
                         return show_nodetree,show_nodetree,current_object
-                        feedback("found nodetree: %s" % current_object.nodetreeName) 
+                        feedback("found nodetree: %s" % current_object.nodetree.name) 
                     else:
                         # inconsistend data. a nodetree is referenced that is not known
-                        feedback("Unknown nodetree(%s) assigned to object %s" % (current_object.nodetreeName,current_object.name))
+                        feedback("Unknown nodetree(%s) assigned to object %s" % (current_object.nodetree.name,current_object.name))
 
                 return None,None,current_object
             

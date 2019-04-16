@@ -138,7 +138,7 @@ class NODE_PT_json_nodetree_select(bpy.types.Panel):
             row = box.label(text="Object-Nodetree")
 
             row = box.row()
-            row.prop_search(bpy.context.active_object,"nodetreeName",bpy.data,"node_groups",text="Nodetree")
+            row.prop(bpy.context.active_object,"nodetree",text="Nodetree")
             
         row = layout.row()
         row.prop(jsonNodes,"autoSelectObjectNodetree",text="autoselect object nodetree")
@@ -264,37 +264,37 @@ def WriteFile(data, filepath):
     file.close()
 
 # property hooks:
-def updateNodetreeName(self,ctx):
-    print("UPDATED-Nodetreename(%s) self:%s  to %s" % (self.name,type(self), type(ctx)) )
-    if (self.nodetreeId!=-1):
-        ctx.space_data.node_tree = JSONNodetreeUtils.getNodetreeById(self.nodetreeId)
-    else:
-        ctx.space_data.node_tree = None
+# def updateNodetreeName(self,ctx):
+#     print("UPDATED-Nodetreename(%s) self:%s  to %s" % (self.name,type(self), type(ctx)) )
+#     if (self.nodetreeId!=-1):
+#         ctx.space_data.node_tree = JSONNodetreeUtils.getNodetreeById(self.nodetreeId)
+#     else:
+#         ctx.space_data.node_tree = None
     
-def getNodetreeName(self):
-    #print("getNodetreeName:self:%s" % type(self))
-    if self.nodetreeId == -1:
-        #print("No nodetree(%s)" % self.name)
-        return ""
+# def getNodetreeName(self):
+#     #print("getNodetreeName:self:%s" % type(self))
+#     if self.nodetreeId == -1:
+#         #print("No nodetree(%s)" % self.name)
+#         return ""
     
-    nodetree = JSONNodetreeUtils.getNodetreeById(self.nodetreeId)
-    if nodetree:
-        return nodetree.name
-    else:
-        return ""
+#     nodetree = JSONNodetreeUtils.getNodetreeById(self.nodetreeId)
+#     if nodetree:
+#         return nodetree.name
+#     else:
+#         return ""
 
-def setNodetreeName(self,value):
-    print("setNodetreeName:self:%s value:%s" % (type(self),value) )
-    if value == "":
-        #print("RESETID")
-        self.nodetreeId = -1
-    else:
-        #print("set %s=%s" % (self.name, str(value) ))
-        nodetree = bpy.data.node_groups[value]
-        self.nodetreeId = JSONNodetreeUtils.getID(nodetree)
-        if bpy.data.worlds[0].jsonNodes.automaticFakeuser:
-            nodetree.use_fake_user=True
-        #print("assigned ID %s" % getID(nodetree))
+# def setNodetreeName(self,value):
+#     print("setNodetreeName:self:%s value:%s" % (type(self),value) )
+#     if value == "":
+#         #print("RESETID")
+#         self.nodetreeId = -1
+#     else:
+#         #print("set %s=%s" % (self.name, str(value) ))
+#         nodetree = bpy.data.node_groups[value]
+#         self.nodetreeId = JSONNodetreeUtils.getID(nodetree)
+#         if bpy.data.worlds[0].jsonNodes.automaticFakeuser:
+#             nodetree.use_fake_user=True
+#         #print("assigned ID %s" % getID(nodetree))
 
 
 
@@ -337,8 +337,8 @@ def register():
     bpy.types.World.jsonNodes=bpy.props.PointerProperty(type=NodeTreeCustomData)
 
     
-    bpy.types.Object.nodetreeName=bpy.props.StringProperty(get=getNodetreeName,set=setNodetreeName,update=updateNodetreeName)
-    bpy.types.Object.nodetreeId = bpy.props.IntProperty(default=-1)
+    bpy.types.Object.nodetree=bpy.props.PointerProperty(type=bpy.types.NodeTree)
+    #bpy.types.Object.nodetreeId = bpy.props.IntProperty(default=-1)
     bpy.types.NodeTree.id = bpy.props.IntProperty(default=-1)
     bpy.types.Object.id = bpy.props.IntProperty(default=-1)
 #    bpy.types.Texture.id = bpy.props.IntProperty(default=-1)
@@ -354,16 +354,17 @@ def unregisterSelectorPanel():
 
 def unregister():
 
-    #for pcoll in preview_collections.values():
-    #    bpy.utils.previews.remove(pcoll)
-    #preview_collections.clear()
+    for pcoll in preview_collections.values():
+        bpy.utils.previews.remove(pcoll)
+    preview_collections.clear()
+    
 
 
     for clazz in classes:
         bpy.utils.unregister_class(clazz)
 
-    del bpy.types.Object.nodetreeName
-    del bpy.types.Object.nodetreeId
+    del bpy.types.Object.nodetree
+    #del bpy.types.Object.nodetreeId
     del bpy.types.NodeTree.id
     del bpy.types.Object.id
     del bpy.types.Image.id
