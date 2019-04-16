@@ -262,12 +262,11 @@ def createNodeTree(data):
             # automatically select nodetree of the current object?
             if config.autoSelectObjectNodetree == True:
                 if current_object.nodetree:
-
+                    show_nodetree = current_object.nodetree
                     # check if the corresponding nodetree acutally exists
-                    if current_object.nodetree in bpy.data.node_groups:
+                    if current_object.nodetree:
                         # node tree is known
-                        show_nodetree = bpy.data.node_groups[current_object.nodetree]
-                        return show_nodetree,show_nodetree,current_object
+                        return current_object.nodetree,current_object.nodetree,current_object
                         feedback("found nodetree: %s" % current_object.nodetree.name) 
                     else:
                         # inconsistend data. a nodetree is referenced that is not known
