@@ -30,12 +30,15 @@ Sample:
 ```
  
 **Install** 
+ 
 Animated gif: see docs/install.gif 
  
 **INPUT-Format** 
+ 
 see docs/inputformat.md
  
-**Usage**  
+**Usage** 
+ 
 * Open compositing-tab
 * Choose MISC
 * Search 'JSON-Nodetree-Loader'
