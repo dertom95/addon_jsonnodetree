@@ -1,0 +1,59 @@
+{
+	"customUI": [],
+	"trees": [
+		{
+			"id": "tree_logic",
+			"name": "Material Tree",
+			"icon": "OUTLINER_DATA_ARMATURE",
+			"nodes": [
+				{
+					"category": "Physics",
+					"id": "urho3dcomponents__CollisionShape",
+					"name": "CollisionShape",
+					"props": [
+						{
+							"name": "Is Enabled",
+							"default": "true",
+							"type": "bool",
+							"subtype": "NONE"
+						},
+						{
+							"name": "Shape Type",
+							"type": "enum",
+							"elements": [
+								{
+									"id": "Box",
+									"name": "Box",
+									"description": "Box",
+									"icon": "COLOR",
+									"number": "0"
+								},
+								{
+									"id": "Sphere",
+									"name": "Sphere",
+									"description": "Sphere",
+									"icon": "COLOR",
+									"number": "0"
+								},
+								{
+									"id": "StaticPlane",
+									"name": "StaticPlane",
+									"description": "StaticPlane",
+									"icon": "COLOR",
+									"number": "0"
+								}
+							],
+							"default": "0"
+						},
+						{
+							"name": "Size",
+							"default": "(1,1,1)",
+							"type": "vector3",
+							"subtype": "NONE"
+						}
+					}
+				}				
+			]
+		}
+	]
+}

@@ -1,0 +1,134 @@
+{
+	"customUI": [],
+	"trees": [
+		{
+			"id": "urho3dcomponents",
+			"name": "Logic Tree",
+			"icon": "OUTLINER_DATA_ARMATURE",
+			"nodes": [
+				{
+					"category": "Sample Component",
+					"id": "urho3dcomponents__CNavigationMesh",
+					"name": "CNavigationMesh",
+					"props": [
+						{
+							"name": "Navmesh Type",
+							"type": "enum",
+							"elements": [
+								{
+									"id": "Dynamic",
+									"name": "Dynamic",
+									"description": "Dynamic",
+									"icon": "COLOR",
+									"number": "0"
+								},
+								{
+									"id": "Static",
+									"name": "Static",
+									"description": "Static",
+									"icon": "COLOR",
+									"number": "0"
+								}
+							],
+							"default": "1"
+						},
+						{
+							"name": "activateNavigation",
+							"default": "false",
+							"type": "bool",
+							"subtype": "NONE"
+						},
+						{
+							"name": "showNavmesh",
+							"default": "true",
+							"type": "float"
+						},
+						{
+							"name": "cell height",
+							"default": "0.05",
+							"type": "float",
+							"min": 0.0,
+							"max": 1.0,
+							"precision": 3,
+							"subtype": "NONE"
+						}
+					]
+				},
+				{
+					"category": "Physics",
+					"id": "urho3dcomponents__CollisionShape",
+					"name": "CollisionShape",
+					"props": [
+						{
+							"name": "Is Enabled",
+							"default": "true",
+							"type": "bool",
+							"subtype": "NONE"
+						},
+						{
+							"name": "Shape Type",
+							"type": "enum",
+							"elements": [
+								{
+									"id": "Box",
+									"name": "Box",
+									"description": "Box",
+									"icon": "COLOR",
+									"number": "0"
+								},
+								{
+									"id": "Sphere",
+									"name": "Sphere",
+									"description": "Sphere",
+									"icon": "COLOR",
+									"number": "0"
+								},
+								{
+									"id": "StaticPlane",
+									"name": "StaticPlane",
+									"description": "StaticPlane",
+									"icon": "COLOR",
+									"number": "0"
+								}
+							],
+							"default": "0"
+						},
+						{
+							"name": "Size",
+							"default": "(1,1,1)",
+							"type": "vector3",
+							"subtype": "NONE"
+						},
+						{
+							"name": "Texture",
+							"type": "enum",
+							"elements": [
+								{
+									"id": "Textures/eyeball_brown_tex.png",
+									"name": "Textures/eyeball_brown_tex.png",
+									"description": "Texture Textures/eyeball_brown_tex.png",
+									"icon": "COLOR",
+									"number": "7867667"
+								},
+								{
+									"id": "Textures/mymo2.png",
+									"name": "Textures/mymo2.png",
+									"description": "Texture Textures/mymo2.png",
+									"icon": "COLOR",
+									"number": "9289096"
+								}
+							],
+							"default": "0"
+						}
+					],
+					"inputsockets": [
+						{
+							"name": "material",
+							"type": "bool"
+						}
+					]
+				}
+			]
+		}
+	]
+}
