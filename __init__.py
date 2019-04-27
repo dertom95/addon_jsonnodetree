@@ -109,7 +109,7 @@ class ExportNodetreeOperator(bpy.types.Operator):
         for scene in bpy.data.scenes:
             sceneExport = exportScene(scene)
             result = json.dumps(sceneExport, ensure_ascii=False, sort_keys=True, indent=4)
-            WriteFile(result,bpy.data.worlds[0].jsonNodes.exportPath+"/scene_"+tree["name"]+".json")     
+            WriteFile(result,bpy.data.worlds[0].jsonNodes.exportPath+"/scene_"+scene.name+".json")     
 
         print("FINISHED")
 
