@@ -31,11 +31,19 @@ Sample:
  
 **Install**
 
-TODO
+Animated gif: see docs/install.gif 
+
+**INPUT-Format**
+see docs/inputformat.md
+
 
 Usage:
 
-* Open node-editor sidebar(right)
-* scroll to 'JSON-Nodetree'
-* select Nodetree-JSON-File
+* Open compositing-tab
+* Choose MISC
+* Search 'JSON-Nodetree-Loader'
+* select Nodetree-JSON-File in path-Field
 * Load
+* Add nodetrees to objects
+* Export as JSON, which will export all links and component-data != default (afaik)
+
