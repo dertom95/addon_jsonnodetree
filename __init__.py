@@ -90,7 +90,7 @@ class LoadNodetreeOperator(bpy.types.Operator):
 class ExportNodetreeOperator(bpy.types.Operator):
     ''''''
     bl_idname = "nodetree.export"
-    bl_label = "export nodetrees"
+    bl_label = "export nodetrees as JSON"
     bl_options = {'REGISTER', 'UNDO'}
     bl_space_type = 'NODE_EDITOR'
  
