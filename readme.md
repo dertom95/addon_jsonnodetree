@@ -30,10 +30,11 @@ Sample:
 ```
  
 **Install**
-
+ 
 Animated gif: see docs/install.gif 
 
-**INPUT-Format**
+**INPUT-Format** 
+ 
 see docs/inputformat.md
 
 
