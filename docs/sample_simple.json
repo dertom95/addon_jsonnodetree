@@ -1,0 +1,24 @@
+{
+    "trees":[
+        {
+            "id":"org.tt.materials",
+            "name":"MaterialTree",
+            "icon":"ERROR",
+            "nodes":[
+                {
+                    "id":"org.tt.Color",
+                    "name":"ColorNode",
+                    "props":[
+                        {"name":"floatProp","type":"float","default":1895.0}
+                    ],
+                    "inputsockets":[ 
+                        {"name":"factor","type":"float"}
+                    ],
+                    "outputsockets":[ 
+                        {"name":"result","type":"float"}
+                    ]
+                }
+            ]
+        }
+    ]
+}

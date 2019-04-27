@@ -97,10 +97,12 @@ def exportNodes(nodetree,onlyValueDifferentFromDefault=False):
     print("11")
     for ntlink in nodetree.links:
         link = {
-            "from_node"     : ntlink.from_node.bl_idname,
+            "from_node_name" : ntlink.from_node.name,
+            "from_node_type"     : ntlink.from_node.bl_idname,
             "from_socket"   : ntlink.from_socket.name,
-            "to_node"       : ntlink.to_node.bl_idname,
-            "to_socket"     : ntlink.to_socket.name
+            "to_node_type"       : ntlink.to_node.bl_idname,
+            "to_socket"     : ntlink.to_socket.name,
+            "to_node_name" :  ntlink.to_node.name
         }
 
         links.append(link)
@@ -655,39 +657,40 @@ def createNodeTrees(data):
     else:
         globalData = None
 
-    for customUI in data["customUI"]:
-        try:
-            customUIScript = base64.b64decode(customUI)
-            customUIScript = customUIScript.decode("utf-8")
-            print("CUSTOMUI:"+customUIScript )
-            exec(customUIScript)
-            print("FINISHED CUSTOMUI")
-            print("TYPE: "+str(type(Custom)))
-        except:
-            print("Something went wrong with customui (base64)")
+    if "customUI" in data:
+        for customUI in data["customUI"]:
+            try:
+                customUIScript = base64.b64decode(customUI)
+                customUIScript = customUIScript.decode("utf-8")
+                print("CUSTOMUI:"+customUIScript )
+                exec(customUIScript)
+                print("FINISHED CUSTOMUI")
+                print("TYPE: "+str(type(Custom)))
+            except:
+                print("Something went wrong with customui (base64)")
 
-    customUIFile = bpy.data.worlds[0].jsonNodes.customUIFile
-    if customUIFile!="":
-        print("try to load customfile:"+customUIFile)
-        try:
-            customuiFileData = open(customUIFile).read();
-            print("CUSTOMUI+++++++++++++++++++++++++-------------------_");
-            print(customuiFileData)
-            if customuiFileData:
-                print("\nTRY TO EXECUTE\n")
-                exec(customuiFileData)
-                print("successs")
+        customUIFile = bpy.data.worlds[0].jsonNodes.customUIFile
+        if customUIFile!="":
+            print("try to load customfile:"+customUIFile)
+            try:
+                customuiFileData = open(customUIFile).read();
+                print("CUSTOMUI+++++++++++++++++++++++++-------------------_");
+                print(customuiFileData)
+                if customuiFileData:
+                    print("\nTRY TO EXECUTE\n")
+                    exec(customuiFileData)
+                    print("successs")
 
-        except NameError as err:
-            print("Could not process customUI-file %s" % data["customUI-file"])
-            print("Name error:"+str(err))
-        except RuntimeError as rer:
-            print("Could not process customUI-file %s" % data["customUI-file"])
-            print("RuntimeError:%s" % str(rer))
-        except:
-            print("Could not process customUI-file %s" % data["customUI-file"])
-            e = sys.exc_info()[0]
-            print("error:"+str(e))
+            except NameError as err:
+                print("Could not process customUI-file %s" % data["customUI-file"])
+                print("Name error:"+str(err))
+            except RuntimeError as rer:
+                print("Could not process customUI-file %s" % data["customUI-file"])
+                print("RuntimeError:%s" % str(rer))
+            except:
+                print("Could not process customUI-file %s" % data["customUI-file"])
+                e = sys.exc_info()[0]
+                print("error:"+str(e))
 
     # create nodetrees
     for nodetree in data["trees"]:

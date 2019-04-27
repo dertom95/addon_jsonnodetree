@@ -10,9 +10,9 @@
 					"category": "Sample Component",
 					"id": "urho3dcomponents__CNavigationMesh",
 					"name": "CNavigationMesh",
-					"inputsockets": [
+					"outputsockets": [
 						{
-							"name": "material",
+							"name": "shapes",
 							"type": "bool"
 						}
 					],					
@@ -53,7 +53,7 @@
 					"name": "CollisionShape",
 					"inputsockets": [
 						{
-							"name": "material",
+							"name": "navmesh",
 							"type": "bool"
 						}
 					],					
