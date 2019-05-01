@@ -2,6 +2,9 @@
 
 This blender-addon let you define simple nodetree-definitions via json
 
+**Disclaimer**
+This addon is highly experimental. Although it works most of the time consider it 'proof of concept'
+
 Sample:
 ```json
 {
@@ -32,11 +35,11 @@ Sample:
  
 **Install** 
  
-Animated gif: see docs/install.gif 
+Animated gif: see [Install](docs/install.gif)  
  
 **INPUT-Format** 
  
-see docs/inputformat.md
+see [docs/inputformat.md](docs/inputformat.md)
  
 **Usage** 
  
@@ -48,3 +51,5 @@ see docs/inputformat.md
 * Add nodetrees to objects
 * Export as JSON, which will export all links and component-data != default (afaik)
 
+** Getting Started - Video **
+[![Getting Started](https://img.youtube.com/vi/P0d4nAOIOVI/0.jpg)](https://www.youtube.com/watch?v=P0d4nAOIOVI)
