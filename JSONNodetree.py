@@ -578,9 +578,14 @@ def createNodeTree(data):
                             traceback.print_exc(file=sys.stdout)                
                         except AttributeError as aerr:
                             print ("attributeError: %s",str(aerr))
+                        except KeyError as keyerr:
+                            print ("error: KeyError %s",str(keyerr))
+                            traceback.print_exc(file=sys.stdout)                
+
                         except:
                             print("error creating property from:%s" % prop["name"])
                             e = sys.exc_info()[0]
+                            traceback.print_exc(file=sys.stdout)
                             print("exception %s" % str(e))                            
                         
                    
@@ -768,7 +773,9 @@ def ntRegister():
         print("runtimeerror:"+str(err))
     except:
         e = sys.exc_info()[0]
+        tb = traceback.format_exc()
         print("error:"+str(e))
+        print(tb)
     
     print("REGISTER NODE-Cats:"+str(node_categories))
 

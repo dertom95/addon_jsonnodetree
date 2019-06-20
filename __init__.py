@@ -29,9 +29,13 @@ from bpy.app.handlers import persistent
 
 #JSONNodeServer.startServer()
 
+preview_collections = {}
 
 
 def processNodetreeFromFile():
+    if "main" in preview_collections:
+        preview_collections["main"].clear()
+
     jsonPath = bpy.data.worlds[0].jsonNodes.path
     print("LOAD NODETREEs from %s" % (jsonPath))
     jsonData = JSONNodetree.loadJSON(jsonPath)
@@ -300,7 +304,6 @@ def WriteFile(data, filepath):
 
 # We can store multiple preview collections here,
 # however in this example we only store "main"
-preview_collections = {}
 
 
 
@@ -325,8 +328,8 @@ def register():
 
     if not "main" in preview_collections:
         preview_collections["main"] = JSONNodetreeUtils.pcoll
-
-
+    else:
+        preview_collections["main"].clear()
 
     for clazz in classes:
         bpy.utils.register_class(clazz)
@@ -353,9 +356,11 @@ def unregisterSelectorPanel():
 
 
 def unregister():
-
     for pcoll in preview_collections.values():
+        print("Remove:pcoll")
+        pcoll.clear()
         bpy.utils.previews.remove(pcoll)
+        print("...done")
     preview_collections.clear()
     
 
