@@ -120,6 +120,7 @@ def exportNodes(nodetree,onlyValueDifferentFromDefault=False):
         dictNode = {
             "id"    :   id,
             "type"  :   node.bl_idname,
+            "label" :   node.bl_label,
             "name"  :   node.name,
             "props" :   [],
             "inputsockets" : [],
