@@ -390,7 +390,7 @@ def createNodeTree(data):
                         if hasattr(self,propName+"_cat"):
                             parent = layout.box()
                             row = parent.row()
-                            row.label(text=propName)
+                            row.label(text=data["name"])
 
                             row = parent.row()
                             try:
@@ -513,12 +513,22 @@ def createNodeTree(data):
             elif type=="enum" or type=="enumPreview":
                 print("2222")
                 default = int(prop.get("default",0));               
+                delimiter="/"        
+                categories={} 
+                
+
+                def add_to_category(category,elem):
+                    if category in categories:
+                        categories[category].append(elem)
+                    else:
+                        categories[category]=[elem]
+
                 elements = []
                 count=0
                 defaultID = None
                 print("2222111")
-                no_category = prop.get("use_category","False")=="False"
-                print("22227777")
+                no_category = prop.get("use_category","false").lower()=="false"
+                print("22227777 %s : %s" %(no_category,name))
 
                 print("22228888")
                 if (len(prop["elements"])==0):
@@ -550,9 +560,23 @@ def createNodeTree(data):
                                     number=count
                             except:
                                 pass
+
+
                             print("USING NUMBER:%s" % number)
-                            elements.append((id,ename,descr,icon,number))
-                        
+                            enumelem = (id,ename,descr,icon,number)
+                            elements.append(enumelem)
+
+                            if not no_category:
+                                add_to_category("all",enumelem)
+                                categoryname = elem.get("category","")
+                                if categoryname and categoryname=="" and delimiter in ename:
+                                    categoryname=ename[:ename.rfind(delimiter)]
+                                if categoryname!="":
+                                    add_to_category(categoryname,enumelem)
+                            else:
+                                print("NO CATE")
+
+
                         # find the defaultID (but to be sure take the firstID in case we don't get to the real defaultID)
                             if count==default or defaultID==None:
                                 defaultID=id
@@ -586,7 +610,16 @@ def createNodeTree(data):
                                     except:
                                         pass
                                     print("USING NUMBER:%s" % number)
-                                    elements.append((id,ename,descr,thumb.icon_id,number))
+                                    enumelem=(id,ename,descr,thumb.icon_id,number)
+                                    elements.append(enumelem)
+
+                                    if not no_category:
+                                        add_to_category("all",enumelem)
+                                        categoryname = elem.get("category",None)
+                                        if not categoryname and delimiter in ename:
+                                            categoryname=ename[:ename.rfind(delimiter)]
+                                        if categoryname:
+                                            add_to_category(categoryname,enumelem)
 
                             # find the defaultID (but to be sure take the firstID in case we don't get to the real defaultID)
                                 if count==default or defaultID==None:
@@ -596,7 +629,7 @@ def createNodeTree(data):
 
                         except NameError as err:
                             print ("error: NameError %s",str(err))
-                            traceback.print_exc(file=sys.stdout)                
+                            use_use_traceback.print_exc(file=sys.stdout)                
                         except TypeError as terr:
                             print ("error: TypeError %s",str(terr))
                             traceback.print_exc(file=sys.stdout)                
@@ -612,25 +645,23 @@ def createNodeTree(data):
                             traceback.print_exc(file=sys.stdout)
                             print("exception %s" % str(e))                            
 
-                delimiter="/"        
-                categories={} 
-                categories["all"]=elements
-                catElems=[]
-                if not no_category:
-                    print("NOoOO CAT")
-                    for e in elements:
-                        print("ELEM:%s" % str(e))
-                        try:
-                            idx = e[1].rfind(delimiter)
-                            category = str(e[1][:idx])
-                            if category in categories:
-                                categories[category].append(e)
-                            else:
-                                categories[category]=[e]
-                        except:
-                            print("EX")
-                            pass
 
+
+
+ #               categories["all"]=elements
+ #               if not no_category:
+ #                   print("NOoOO CAT")
+ #                   for e in elements:
+ #                       print("ELEM:%s" % str(e))
+ #                       try:
+ #                           idx = e[1].rfind(delimiter)
+ #                           category = str(e[1][:idx])
+ #                           add_to_category(category,e)
+ #                       except:
+ #                           print("EX")
+ #                           pass
+                    catElems=[]
+ 
                     for catName in categories.keys():
                         catElems.append((catName,catName,catName))
 
