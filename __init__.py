@@ -124,6 +124,7 @@ class NODE_PT_json_nodetree_select(bpy.types.Panel):
     bl_space_type = 'NODE_EDITOR'
     bl_region_type = 'UI'
     bl_label = "JSON-Nodetree Selector"
+    bl_category = "JSON-Nodes"
 #    bl_options = {'HIDE_HEADER'}
 
     @classmethod
@@ -206,6 +207,8 @@ class NODE_PT_json_nodetree_file(bpy.types.Panel):
     bl_space_type = 'NODE_EDITOR'
     bl_region_type = 'UI'
     bl_label = "JSON-Nodetree Loader"
+    bl_category = "JSON-Nodes"
+
 #    bl_options = {'HIDE_HEADER'}
 
     @classmethod
