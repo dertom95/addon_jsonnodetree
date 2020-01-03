@@ -39,8 +39,24 @@ def processNodetreeFromFile():
     jsonPath = bpy.data.worlds[0].jsonNodes.path
     print("LOAD NODETREEs from %s" % (jsonPath))
     jsonData = JSONNodetree.loadJSON(jsonPath)
+
+    jsonPath2 = bpy.data.worlds[0].jsonNodes.path2
+    if jsonPath2 and jsonPath2!="":
+        jsonData2 = JSONNodetree.loadJSON(jsonPath2)
+
+        for nodetree in jsonData2["trees"]:
+            idx = 0
+            for current in jsonData["trees"]:
+                if current["id"]==nodetree["id"]:
+                    print("REPLACE NODETREE with id: %s" % nodetree["id"])
+                    jsonData["trees"][idx] = nodetree
+                    break
+        
+
+
     JSONNodetree.createNodeTrees(jsonData)
 
+    
 
 
     JSONNodetree.ntRegister()
@@ -176,6 +192,8 @@ def drawJSONFileSettings(self, context):
         row = box.row()
         row.prop(jsonNodes,"path")
         row = box.row()
+        row.prop(jsonNodes,"path2")        
+        row = box.row()
         row.prop(jsonNodes,"customUIFile")
         row = box.row()
         row.operator("nodetree.jsonload")
@@ -240,6 +258,7 @@ class NodeTreeCustomData(bpy.types.PropertyGroup):
     runtimeHost   : bpy.props.StringProperty(default="localhost")
     runtimePort : bpy.props.IntProperty(default=9595);
     path : bpy.props.StringProperty(subtype="FILE_PATH")
+    path2 : bpy.props.StringProperty(subtype="FILE_PATH")
     exportPath: bpy.props.StringProperty(subtype="FILE_PATH")
     autoSelectObjectNodetree : bpy.props.BoolProperty()
     # counter for unique ids
