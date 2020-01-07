@@ -36,21 +36,26 @@ def processNodetreeFromFile():
     if "main" in preview_collections:
         preview_collections["main"].clear()
 
+    jsonData = None
     jsonPath = bpy.data.worlds[0].jsonNodes.path
-    print("LOAD NODETREEs from %s" % (jsonPath))
-    jsonData = JSONNodetree.loadJSON(jsonPath)
+    if jsonPath:
+        print("LOAD NODETREEs from %s" % (jsonPath))
+        jsonData = JSONNodetree.loadJSON(jsonPath)
 
     jsonPath2 = bpy.data.worlds[0].jsonNodes.path2
-    if jsonPath2 and jsonPath2!="":
+    if jsonPath2:
         jsonData2 = JSONNodetree.loadJSON(jsonPath2)
 
-        for nodetree in jsonData2["trees"]:
-            idx = 0
-            for current in jsonData["trees"]:
-                if current["id"]==nodetree["id"]:
-                    print("REPLACE NODETREE with id: %s" % nodetree["id"])
-                    jsonData["trees"][idx] = nodetree
-                    break
+        if jsonData:
+            for nodetree in jsonData2["trees"]:
+                idx = 0
+                for current in jsonData["trees"]:
+                    if current["id"]==nodetree["id"]:
+                        print("REPLACE NODETREE with id: %s" % nodetree["id"])
+                        jsonData["trees"][idx] = nodetree
+                        break
+        else:
+            jsonData = jsonData2
         
 
 
@@ -175,6 +180,17 @@ class NODE_PT_json_nodetree_select(bpy.types.Panel):
         row.prop(jsonNodes,"outputHooks",text="output called hooks on stdout")
 
 
+def DeActivatePath2Timer():
+    jsonNodes = bpy.data.worlds[0].jsonNodes
+
+    if jsonNodes.path2_autoreload:
+        if not bpy.app.timers.is_registered(checkFileChange):
+            bpy.app.timers.register(checkFileChange,first_interval=0, persistent=True)
+    else:
+        if bpy.app.timers.is_registered(checkFileChange):
+            bpy.app.timers.unregister(checkFileChange)
+
+
 def drawJSONFileSettings(self, context):
     jsonNodes = bpy.data.worlds[0].jsonNodes
 
@@ -192,8 +208,13 @@ def drawJSONFileSettings(self, context):
         row = box.row()
         row.prop(jsonNodes,"path")
         row = box.row()
-        row.prop(jsonNodes,"path2")        
+        row.prop(jsonNodes,"path2") 
+        row.prop(jsonNodes,"path2_autoreload",text="")
+
+        DeActivatePath2Timer()
+
         row = box.row()
+        
         row.prop(jsonNodes,"customUIFile")
         row = box.row()
         row.operator("nodetree.jsonload")
@@ -245,7 +266,7 @@ class IV_Preferences(bpy.types.AddonPreferences):
 @persistent
 def load_handler(dummy):
     print("Load Handler:", bpy.data.filepath)
-    if (bpy.data.worlds[0].jsonNodes.path!=""):
+    if (bpy.data.worlds[0].jsonNodes.path!="" or bpy.data.worlds[0].jsonNodes.path2!=""):
         processNodetreeFromFile()    
 
 
@@ -259,6 +280,9 @@ class NodeTreeCustomData(bpy.types.PropertyGroup):
     runtimePort : bpy.props.IntProperty(default=9595);
     path : bpy.props.StringProperty(subtype="FILE_PATH")
     path2 : bpy.props.StringProperty(subtype="FILE_PATH")
+    path2_autoreload : bpy.props.BoolProperty(default=True,description="autoreload on change")
+    path2_lastmodified : bpy.props.IntProperty()
+
     exportPath: bpy.props.StringProperty(subtype="FILE_PATH")
     autoSelectObjectNodetree : bpy.props.BoolProperty()
     # counter for unique ids
@@ -266,6 +290,8 @@ class NodeTreeCustomData(bpy.types.PropertyGroup):
     automaticFakeuser : bpy.props.BoolProperty(default=True,description="add a fakeuser to the nodetrees that get assigned")
     outputHooks : bpy.props.BoolProperty(default=False,description="FOR DEVELOPERS: output the hooks/callbacks tried to be called for overriding ui and behaviour")
     customUIFile : bpy.props.StringProperty(subtype="FILE_PATH")
+
+
 
 classes = [
     ExportNodetreeOperator,
@@ -326,8 +352,20 @@ def WriteFile(data, filepath):
 
 # We can store multiple preview collections here,
 # however in this example we only store "main"
+# check if path2 should be checked for mods
+if 'checkFileChange' not in globals():
+    print("ACTIVATE CHECKFILECHANGE")
+    def checkFileChange():
+        jsonNodes = bpy.data.worlds[0].jsonNodes
+        if jsonNodes.path2_autoreload and jsonNodes.path2 and os.path.exists(jsonNodes.path2):
+            fileModifiedTime = os.stat(jsonNodes.path2)[8]
 
+            if fileModifiedTime != jsonNodes.path2_lastmodified:
+                jsonNodes.path2_lastmodified = fileModifiedTime
+                bpy.ops.nodetree.jsonload()
 
+        return 2.0
+        
 
 
 def register():
@@ -357,7 +395,6 @@ def register():
         bpy.utils.register_class(clazz)
 
 
-
     # link the json-ui config data into world object and access it via byp.data.world[0].jsonNodes
     bpy.types.World.jsonNodes=bpy.props.PointerProperty(type=NodeTreeCustomData)
 
@@ -370,6 +407,7 @@ def register():
     bpy.types.Image.id = bpy.props.IntProperty(default=-1)
     
     bpy.app.handlers.load_post.append(load_handler)
+    DeActivatePath2Timer()
 
     
 def unregisterSelectorPanel():
@@ -378,6 +416,9 @@ def unregisterSelectorPanel():
 
 
 def unregister():
+    if bpy.app.timers.is_registered(checkFileChange):
+        bpy.app.timers.unregister(checkFileChange)
+
     for pcoll in preview_collections.values():
         print("Remove:pcoll")
         pcoll.clear()
