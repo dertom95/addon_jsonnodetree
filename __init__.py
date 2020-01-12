@@ -171,7 +171,7 @@ class NODE_PT_json_nodetree_select(bpy.types.Panel):
 
         row = layout.row()
         
-        row.prop(jsonNodes,"automaticFakeuser",text="automatic set fake user to assigned nodetrees")        
+        #row.prop(jsonNodes,"automaticFakeuser",text="automatic set fake user to assigned nodetrees")        
         
         box = layout.row().box()
         row = box.row()
@@ -287,7 +287,7 @@ class NodeTreeCustomData(bpy.types.PropertyGroup):
     autoSelectObjectNodetree : bpy.props.BoolProperty()
     # counter for unique ids
     uuid : bpy.props.IntProperty(default=0)
-    automaticFakeuser : bpy.props.BoolProperty(default=True,description="add a fakeuser to the nodetrees that get assigned")
+    #automaticFakeuser : bpy.props.BoolProperty(default=True,description="add a fakeuser to the nodetrees that get assigned")
     outputHooks : bpy.props.BoolProperty(default=False,description="FOR DEVELOPERS: output the hooks/callbacks tried to be called for overriding ui and behaviour")
     customUIFile : bpy.props.StringProperty(subtype="FILE_PATH")
 

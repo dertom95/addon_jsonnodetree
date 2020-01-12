@@ -401,7 +401,7 @@ def createNodeTree(data):
                             row = parent.row()
 
                         if propType == "enumPreview":
-                            print("Check: %s %s" % (self.name,propName))
+                            #print("Check: %s %s" % (self.name,propName))
                             parent.template_icon_view(self,propName,show_labels=True)
                             parent.prop(self,propName)
                         else:
