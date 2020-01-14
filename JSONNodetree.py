@@ -667,7 +667,7 @@ def createNodeTree(data):
 
                 def dynamicElements(self,context):
                     catEnum = eval("self.%s_cat"%name)
-                    print ("cat:%s" % catEnum)
+                    #print ("cat:%s" % catEnum)
                     return categories[str(catEnum)]
                     #return categories["all"]
 

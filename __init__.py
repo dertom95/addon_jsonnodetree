@@ -181,14 +181,18 @@ class NODE_PT_json_nodetree_select(bpy.types.Panel):
 
 
 def DeActivatePath2Timer():
-    jsonNodes = bpy.data.worlds[0].jsonNodes
+    try:
+        jsonNodes = bpy.data.worlds[0].jsonNodes
 
-    if jsonNodes.path2_autoreload:
-        if not bpy.app.timers.is_registered(checkFileChange):
-            bpy.app.timers.register(checkFileChange,first_interval=0, persistent=True)
-    else:
-        if bpy.app.timers.is_registered(checkFileChange):
-            bpy.app.timers.unregister(checkFileChange)
+        if jsonNodes.path2_autoreload:
+            if not bpy.app.timers.is_registered(checkFileChange):
+                bpy.app.timers.register(checkFileChange,first_interval=0, persistent=True)
+        else:
+            if bpy.app.timers.is_registered(checkFileChange):
+                bpy.app.timers.unregister(checkFileChange)
+    except Exception as e:
+        print("Something went wrong in DeactivePath2Timer: %s" % e)
+        return        
 
 
 def drawJSONFileSettings(self, context):
