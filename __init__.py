@@ -184,7 +184,7 @@ def DeActivatePath2Timer():
     try:
         jsonNodes = bpy.data.worlds[0].jsonNodes
 
-        if jsonNodes.path2_autoreload:
+        if jsonNodes.path_autoreload or jsonNodes.path2_autoreload:
             if not bpy.app.timers.is_registered(checkFileChange):
                 bpy.app.timers.register(checkFileChange,first_interval=0, persistent=True)
         else:
@@ -211,6 +211,7 @@ def drawJSONFileSettings(self, context):
         box = layout.box()
         row = box.row()
         row.prop(jsonNodes,"path")
+        row.prop(jsonNodes,"path_autoreload",text="")
         row = box.row()
         row.prop(jsonNodes,"path2") 
         row.prop(jsonNodes,"path2_autoreload",text="")
@@ -283,6 +284,9 @@ class NodeTreeCustomData(bpy.types.PropertyGroup):
     runtimeHost   : bpy.props.StringProperty(default="localhost")
     runtimePort : bpy.props.IntProperty(default=9595);
     path : bpy.props.StringProperty(subtype="FILE_PATH")
+    path_autoreload : bpy.props.BoolProperty(default=True,description="autoreload on change")
+    path_lastmodified : bpy.props.IntProperty()
+
     path2 : bpy.props.StringProperty(subtype="FILE_PATH")
     path2_autoreload : bpy.props.BoolProperty(default=True,description="autoreload on change")
     path2_lastmodified : bpy.props.IntProperty()
@@ -361,13 +365,26 @@ if 'checkFileChange' not in globals():
     print("ACTIVATE CHECKFILECHANGE")
     def checkFileChange():
         jsonNodes = bpy.data.worlds[0].jsonNodes
+
+        reload = False
+        if jsonNodes.path_autoreload and jsonNodes.path and os.path.exists(jsonNodes.path):
+            fileModifiedTime = os.stat(jsonNodes.path)[8]
+
+            if fileModifiedTime != jsonNodes.path_lastmodified:
+                jsonNodes.path_lastmodified = fileModifiedTime
+                reload = True
+
         if jsonNodes.path2_autoreload and jsonNodes.path2 and os.path.exists(jsonNodes.path2):
             fileModifiedTime = os.stat(jsonNodes.path2)[8]
 
             if fileModifiedTime != jsonNodes.path2_lastmodified:
                 jsonNodes.path2_lastmodified = fileModifiedTime
-                bpy.ops.nodetree.jsonload()
+                reload = True
 
+        if reload:
+            bpy.ops.nodetree.jsonload()
+
+        
         return 2.0
         
 
