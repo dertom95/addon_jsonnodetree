@@ -47,13 +47,21 @@ def processNodetreeFromFile():
         jsonData2 = JSONNodetree.loadJSON(jsonPath2)
 
         if jsonData:
+            print("merge json-data")
             for nodetree in jsonData2["trees"]:
-                idx = 0
-                for current in jsonData["trees"]:
-                    if current["id"]==nodetree["id"]:
-                        print("REPLACE NODETREE with id: %s" % nodetree["id"])
-                        jsonData["trees"][idx] = nodetree
-                        break
+                # TODO merge trees of same type?
+                jsonData["trees"].append(nodetree)
+            
+            
+            
+            # for nodetree in jsonData2["trees"]:
+            #     idx = 0
+            #     for current in jsonData["trees"]:
+            #         if current["id"]==nodetree["id"]:
+            #             print("REPLACE NODETREE with id: %s" % nodetree["id"])
+            #             jsonData["trees"][idx] = nodetree
+            #             break
+                    
         else:
             jsonData = jsonData2
         
