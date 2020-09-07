@@ -593,6 +593,7 @@ def createNodeTree(data):
                                     print("THUMB: %s - %s" % (filename,str(thumb.icon_id)))
                                     if not thumb:
                                         print("SOMETHING WENT WRONG WITH THUMB CREATION")
+                                        continue
 
                                     id = elem.get("id",("%s-%i" % (name,count)))
                                     ename = elem.get("name",("%s-%i" % (name,count)))
