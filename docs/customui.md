@@ -40,8 +40,58 @@ Custom.UI_sidebar_[NODEID](self,context,layout,propName)
 ``` 
 
 **ADDITIONAL PROPERTIES**: 
+
+create function that returns the property data. e.g.
 ```json
-CUSTOM.UI_props_[NODEID]=[ { /*property-definition like in the nodetree.json*/ },... ]
+
+#create a function
+def _UI_props_urho3dcomponents__NavigationMesh():
+    return [
+        {
+            "name": "Shape Type",
+            "type": "enum",
+            "elements": [
+                {
+                    "id": "Box",
+                    "name": "Box",
+                    "description": "Box",
+                    "icon": "COLOR",
+                    "number": "0"
+                },
+                {
+                    "id": "Sphere",
+                    "name": "Sphere",
+                    "description": "Sphere",
+                    "icon": "COLOR",
+                    "number": "0"
+                },
+                {
+                    "id": "StaticPlane",
+                    "name": "StaticPlane",
+                    "description": "StaticPlane",
+                    "icon": "COLOR",
+                    "number": "0"
+                }
+            ],
+            "default": "0"
+        }
+]
+# map this function to add properties to the node
+Custom.UI_props_urho3dcomponents__NavigationMesh=_UI_props_urho3dcomponents__NavigationMesh
+```
+
+**ADDITIONAL UI-Output on Node**
+
+```
+# define the output-hook
+def _UI_urho3dcomponents__Light(self,context,layout):
+    layout.label(text="FORTUNA")
+
+# map the hook
+# add to top of the node
+Custom.UI_urho3dcomponents__Light_top=_UI_urho3dcomponents__Light    
+# add to top of the bottom
+Custom.UI_urho3dcomponents__Light_bottom=_UI_urho3dcomponents__Light    
 ```
 
 **ADDITIONAL CLASSES TO BE REGISTERED**

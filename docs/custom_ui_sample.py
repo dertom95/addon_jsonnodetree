@@ -2,7 +2,8 @@
 # VERY EXPERIMENTAL
 
 
-Custom.UI_props_urho3dcomponents__CNavigationMesh = [
+def _UI_props_urho3dcomponents__NavigationMesh():
+    return [
         {
             "name": "Shape Type",
             "type": "enum",
@@ -33,11 +34,14 @@ Custom.UI_props_urho3dcomponents__CNavigationMesh = [
         }
 ]
 
-def UI_urho3dcomponents__CNavigationMesh(self,context,layout,propName):
+Custom.UI_props_urho3dcomponents__NavigationMesh=_UI_props_urho3dcomponents__NavigationMesh
+
+def UI_urho3dcomponents__NavigationMesh(self,context,layout,propName):
     layout.label(text="FORTUNA")
     layout.operator("object.simple_operator")
     
-Custom.UI_urho3dcomponents__CNavigationMesh_prop_debug_color=UI_urho3dcomponents__CNavigationMesh
+#Custom.UI_urho3dcomponents__NavigationMesh_prop_debug_color=UI_urho3dcomponents__NavigationMesh
+Custom.UI_urho3dcomponents__Light_prop_Color=UI_urho3dcomponents__NavigationMesh
 
 class SimpleOperator(bpy.types.Operator):
     """Tooltip"""
@@ -52,4 +56,16 @@ class SimpleOperator(bpy.types.Operator):
         print("FORTUNA FORTUNA")
         return {'FINISHED'}
 
+
+
 Custom.UI_registerClasses=[SimpleOperator]
+
+print("#####################################")
+print("#####################################")
+print("#####################################")
+print("##########                           ###########################")
+print("#####################################")
+print("#####################################")
+print("#####################################")
+print("#####################################")
+print("#####################################")

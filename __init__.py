@@ -18,7 +18,7 @@ path = os.path.dirname(os.path.realpath(__file__))
 print("__##current_path:"+path)
 sys.path.insert(0, path)
 
-
+import base64
 import bpy
 import JSONNodetree 
 import JSONNodetreeUtils
@@ -65,6 +65,14 @@ def processNodetreeFromFile():
         else:
             jsonData = jsonData2
         
+    customUIFile = bpy.data.worlds[0].jsonNodes.customUIFile
+    print(";;;;;;;;;;;;;;; customUIFile")
+    if customUIFile:
+        file = open(customUIFile,"r")
+        result = file.read()
+        b64encoded = base64.b64encode(result.encode('ascii')) # the nodetree expects customUIs to be store in base64-format
+        
+        jsonData["customUI"]=[b64encoded]
 
 
     JSONNodetree.createNodeTrees(jsonData)

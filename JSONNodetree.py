@@ -373,6 +373,17 @@ def createNodeTree(data):
             def draw_buttons(self, context, layout):
                 layout.label(text="Node settings")
 
+                try:
+                    # here you have the chance to add additional buttons at the bottom
+                    if bpy.data.worlds[0].jsonNodes.outputHooks:
+                        print("HOOK UI additional props: Node("+data["id"]+"): Custom.UI_"+data['id']+"_top(self,context,layout)")
+
+                    exec("Custom.UI_"+data["id"]+"_top(self,context,layout)")
+                    #print("FOUND NODE-Hook Custom.UI_"+data["id"]+"(self,context,layout)")
+                except:
+                    pass
+
+
                 for propName in self.propNames:
                     try:
                         # override? Custom.[NodeName]_[PropName]
@@ -409,11 +420,11 @@ def createNodeTree(data):
                             parent.prop(self,propName)
 
                 try:
-                    # here you have the chance to add additional buttons
+                    # here you have the chance to add additional buttons at the bottom
                     if bpy.data.worlds[0].jsonNodes.outputHooks:
-                        print("HOOK UI additional props: Node("+data["id"]+"): Custom.UI_"+data['id']+"(self,context,layout,propName)")
+                        print("HOOK UI additional props: Node("+data["id"]+"): Custom.UI_"+data['id']+"_bottom(self,context,layout)")
 
-                    exec("Custom.UI_"+data["id"]+"(self,context,layout)")
+                    exec("Custom.UI_"+data["id"]+"_bottom(self,context,layout)")
                     #print("FOUND NODE-Hook Custom.UI_"+data["id"]+"(self,context,layout)")
                 except:
                     pass

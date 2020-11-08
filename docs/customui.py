@@ -14,7 +14,7 @@ def UI_UrhoEngine__NavArea_props():
     ]
 #then add this to the Custom-class with the notation:
 #Custom.UI_[TreeName]__[NodeName]_props = prop-function(name doesn't matter)
-Custom.UI_UrhoEngine__NavArea_props=UI_UrhoEngine__NavArea_props
+Custom.UI_props_urho3dcomponents__NavArea=UI_UrhoEngine__NavArea_props
 
 ## overwrite visual
 def UI_UrhoEngine__NavArea_prop_Bounding_Box_Min(self,context,layout,propName):
