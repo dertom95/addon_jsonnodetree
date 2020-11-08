@@ -578,9 +578,12 @@ def createNodeTree(data):
 
 
                         # find the defaultID (but to be sure take the firstID in case we don't get to the real defaultID)
-                            if count==default or defaultID==None:
+                            if number==default or defaultID==None:
                                 defaultID=id
-                                print("DAULT ID")                       
+                                print("DEFAULT ID %s" % id)
+                            else:
+                                print("NOT DEFAULT ID (%s) %s!=%s" %(id,number,default))
+
 
                             count = count + 1
                     else: # preview-enum
@@ -681,7 +684,7 @@ def createNodeTree(data):
                     try:
                         print("1:%s " % name)
                         print(":2:%s "% label)
-                        exec("InnerCustomNode.__annotations__['%s']=bpy.props.EnumProperty(name='%s',items=elements)" % (name,label))
+                        exec("InnerCustomNode.__annotations__['%s']=bpy.props.EnumProperty(name='%s',items=elements,default='%s')" % (name,label,defaultID))
                     except:
                         traceback.print_exc(file=sys.stdout)                  
             else:
