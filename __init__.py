@@ -12,6 +12,7 @@ bl_info = {
     "category": "NodeTree",
     }
 
+
 import os,sys
 import json
 path = os.path.dirname(os.path.realpath(__file__))
@@ -89,25 +90,24 @@ def exportScene(scene):
 def exportNodetree(nodetree,onlyValueDifferentFromDefault=False):
     return JSONNodetree.exportNodes(nodetree,onlyValueDifferentFromDefault)
 
-class ModalOperator(bpy.types.Operator):
-    bl_idname = "object.modal_operator"
-    bl_label = "Simple Modal Operator"
+# class ModalOperator(bpy.types.Operator):
+#     bl_idname = "object.modal_operator"
+#     bl_label = "Simple Modal Operator"
 
-    def execute(self, context):
-        print("This is the modal operator")
-        return {'FINISHED'}
+#     def execute(self, context):
+#         print("This is the modal operator")
+#         return {'FINISHED'}
 
-    def modal(self, context, event):
-        print ("FLUSH ACTIONS")
-        JSONNodetreeUtils.flushIDAssignmentBuffer()
-        return {'FINISHED'}
+#     def modal(self, context, event):
+#         print ("FLUSH ACTIONS")
+#         JSONNodetreeUtils.flushIDAssignmentBuffer()
+#         return {'FINISHED'}
 
-    def invoke(self, context, event):
-        print("This is the invoker")
+#     def invoke(self, context, event):
+#         print("This is the invoker")
 
-        context.window_manager.modal_handler_add(self)
-        return {'RUNNING_MODAL'}
-
+#         context.window_manager.modal_handler_add(self)
+#         return {'RUNNING_MODAL'}
 
 # Export startup config fo gamekit
 class LoadNodetreeOperator(bpy.types.Operator):
@@ -156,45 +156,6 @@ class ExportNodetreeOperator(bpy.types.Operator):
 
         return {'FINISHED'}        
 
-## select nodetree for object
-class NODE_PT_json_nodetree_select(bpy.types.Panel):
-    bl_space_type = 'NODE_EDITOR'
-    bl_region_type = 'UI'
-    bl_label = "JSON-Nodetree Selector"
-    bl_category = "JSON-Nodes"
-#    bl_options = {'HIDE_HEADER'}
-
-    @classmethod
-    def poll(cls, context):
-        return True
-
-    def draw(self, context):
-        jsonNodes = bpy.data.worlds[0].jsonNodes
-
-        #nodetree = context.space_data.node_tree
-        #print("TREE:"+str(nodetree))     
-        layout = self.layout
-
-        if bpy.context.active_object:
-            box = layout.box()
-            row = box.label(text="Object-Nodetree")
-
-            row = box.row()
-            row.prop(bpy.context.active_object,"nodetree",text="Nodetree")
-            
-        row = layout.row()
-        row.prop(jsonNodes,"autoSelectObjectNodetree",text="autoselect object nodetree")
-
-        row = layout.row()
-        
-        #row.prop(jsonNodes,"automaticFakeuser",text="automatic set fake user to assigned nodetrees")        
-        
-        box = layout.row().box()
-        row = box.row()
-        row.label(text="For developers:")
-        row = box.row()
-        row.prop(jsonNodes,"outputHooks",text="output called hooks on stdout")
-
 
 def DeActivatePath2Timer():
     try:
@@ -207,7 +168,7 @@ def DeActivatePath2Timer():
             if bpy.app.timers.is_registered(checkFileChange):
                 bpy.app.timers.unregister(checkFileChange)
 
-        print("Timers activated!")
+        #print("Timers activated!")
     except Exception as e:
         print("Could not activate timers,yet (%s)" % e)
         return        
@@ -228,19 +189,50 @@ def drawJSONFileSettings(self, context):
         row.label(text="Load JSON-Trees from file")
         box = layout.box()
         row = box.row()
-        row.prop(jsonNodes,"path")
+        row.prop(jsonNodes,"path",text=jsonNodes.path_ui_name)
         row.prop(jsonNodes,"path_autoreload",text="")
         row = box.row()
-        row.prop(jsonNodes,"path2") 
+        row.prop(jsonNodes,"path2",text=jsonNodes.path2_ui_name) 
         row.prop(jsonNodes,"path2_autoreload",text="")
 
         DeActivatePath2Timer()
 
+        if jsonNodes.show_custom_ui_field:
+            row = box.row()
+            row.prop(jsonNodes,"customUIFile")
+
         row = box.row()
-        
-        row.prop(jsonNodes,"customUIFile")
-        row = box.row()
-        row.operator("nodetree.jsonload")
+        row.operator("nodetree.jsonload",text=jsonNodes.load_trees_button_name)
+
+        jsonNodes = bpy.data.worlds[0].jsonNodes
+
+        #nodetree = context.space_data.node_tree
+        #print("TREE:"+str(nodetree))     
+        layout = self.layout
+
+        if jsonNodes.show_object_mapping:
+            if bpy.context.active_object:
+                box = layout.box()
+                row = box.label(text="Object-Nodetree")
+
+                row = box.row()
+                row.prop(bpy.context.active_object,"nodetree",text="Nodetree")
+            
+        if jsonNodes.show_auto_select:
+            row = layout.row()
+            row.prop(jsonNodes,"autoSelectObjectNodetree",text="autoselect object nodetree")
+
+        if jsonNodes.show_developer:
+            row = layout.row()
+            
+            #row.prop(jsonNodes,"automaticFakeuser",text="automatic set fake user to assigned nodetrees")        
+            
+            box = layout.row().box()
+            row = box.row()
+            row.label(text="For developers:")
+            row = box.row()
+            row.prop(jsonNodes,"outputHooks",text="output called hooks on stdout")
+
 
         
     elif (jsonNodes.usageType == "from_runtime"):
@@ -258,11 +250,12 @@ def drawJSONFileSettings(self, context):
         row.prop(jsonNodes,"runtimePort")
         
     ## TODO: export is not finished needs have a deeeep look. not sure about the state anymore    
-    box = layout.box()
-    row = box.row()
-    row.prop(jsonNodes,"exportPath")
-    row = box.row()
-    row.operator("nodetree.export")
+    if jsonNodes.show_export_panel:
+        box = layout.box()
+        row = box.row()
+        row.prop(jsonNodes,"exportPath")
+        row = box.row()
+        row.operator("nodetree.export")
 
 
 class NODE_PT_json_nodetree_file(bpy.types.Panel):
@@ -300,14 +293,26 @@ class NodeTreeCustomData(bpy.types.PropertyGroup):
         ('from_runtime','from runtime','Get nodetrees dynamically from runtime','ALIGN',1)
     ])
     runtimeHost   : bpy.props.StringProperty(default="localhost")
-    runtimePort : bpy.props.IntProperty(default=9595);
+    runtimePort : bpy.props.IntProperty(default=9595)
     path : bpy.props.StringProperty(subtype="FILE_PATH")
     path_autoreload : bpy.props.BoolProperty(default=True,description="autoreload on change")
     path_lastmodified : bpy.props.IntProperty()
+    path_ui_name : bpy.props.StringProperty(default="Path")
+
 
     path2 : bpy.props.StringProperty(subtype="FILE_PATH")
     path2_autoreload : bpy.props.BoolProperty(default=True,description="autoreload on change")
     path2_lastmodified : bpy.props.IntProperty()
+    path2_ui_name : bpy.props.StringProperty(default="Path2")
+
+    load_trees_button_name : bpy.props.StringProperty(default="load json-trees")
+
+    show_custom_ui_field : bpy.props.BoolProperty(default=True)
+    show_export_panel : bpy.props.BoolProperty(default=True)
+    show_object_export : bpy.props.BoolProperty(default=True)
+    show_developer : bpy.props.BoolProperty(default=True)
+    show_object_mapping: bpy.props.BoolProperty(default=True)
+    show_auto_select: bpy.props.BoolProperty(default=True)
 
     exportPath: bpy.props.StringProperty(subtype="FILE_PATH")
     autoSelectObjectNodetree : bpy.props.BoolProperty()
@@ -319,15 +324,7 @@ class NodeTreeCustomData(bpy.types.PropertyGroup):
 
 
 
-classes = [
-    ExportNodetreeOperator,
-    LoadNodetreeOperator,
-    NODE_PT_json_nodetree_file,
-    NODE_PT_json_nodetree_select,
-    NodeTreeCustomData,
-    ModalOperator,
-    IV_Preferences    
-]
+
 
 def WriteFile(data, filepath):
     try:
@@ -406,15 +403,27 @@ if 'checkFileChange' not in globals():
         
         return 2.0
         
+classes = [
+    ExportNodetreeOperator,
+    LoadNodetreeOperator,
+    NodeTreeCustomData,
+    #ModalOperator,
+    IV_Preferences
+]
 
+classes_ui = [
+    NODE_PT_json_nodetree_file,
+]
 
 def register():
-    #rxUtils.disposeAll()
-    #try:
-    #    unregister()
-    #except:
-    #    pass
+    json_nodetree_register()
+    for clazz in classes_ui:
+        bpy.utils.register_class(clazz)
 
+def json_nodetree_register():
+    global classes,classes_ui
+
+    # install logic (without UI)
 
     # Note that preview collections returned by bpy.utils.previews
     # are regular py objects - you can use them to store custom data.
@@ -449,13 +458,13 @@ def register():
     bpy.app.handlers.load_post.append(load_handler)
     DeActivatePath2Timer()
 
-    
-def unregisterSelectorPanel():
-    print("Try to remove the default-nodetree-selector!")
-    bpy.utils.unregister_class(NODE_PT_json_nodetree_select)
-
 
 def unregister():
+    json_nodetree_unregister
+    for clazz in classes_ui:
+        bpy.utils.unregister_class(clazz)
+
+def json_nodetree_unregister():
     if bpy.app.timers.is_registered(checkFileChange):
         bpy.app.timers.unregister(checkFileChange)
 
