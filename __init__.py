@@ -13,7 +13,7 @@ bl_info = {
     }
 
 
-import os,sys
+import os,sys,traceback
 import json
 path = os.path.dirname(os.path.realpath(__file__))
 print("__##current_path:"+path)
@@ -418,7 +418,10 @@ classes_ui = [
 def register():
     json_nodetree_register()
     for clazz in classes_ui:
-        bpy.utils.register_class(clazz)
+        try:
+            bpy.utils.register_class(clazz)
+        except:
+            print("Unexpected error in jsonnodetree_register_ui:%s" % traceback.format_exc())
 
 def json_nodetree_register():
     global classes,classes_ui
@@ -441,7 +444,10 @@ def json_nodetree_register():
         preview_collections["main"].clear()
 
     for clazz in classes:
-        bpy.utils.register_class(clazz)
+        try:
+            bpy.utils.register_class(clazz)
+        except:
+            print("Unexpected error in jsonnodetree_register:%s" % traceback.format_exc())
 
 
     # link the json-ui config data into world object and access it via byp.data.world[0].jsonNodes
@@ -460,7 +466,7 @@ def json_nodetree_register():
 
 
 def unregister():
-    json_nodetree_unregister
+    json_nodetree_unregister()
     for clazz in classes_ui:
         bpy.utils.unregister_class(clazz)
 
