@@ -206,8 +206,10 @@ def DeActivatePath2Timer():
         else:
             if bpy.app.timers.is_registered(checkFileChange):
                 bpy.app.timers.unregister(checkFileChange)
+
+        print("Timers activated!")
     except Exception as e:
-        print("Something went wrong in DeactivePath2Timer: %s" % e)
+        print("Could not activate timers,yet (%s)" % e)
         return        
 
 
@@ -380,6 +382,7 @@ def WriteFile(data, filepath):
 if 'checkFileChange' not in globals():
     print("ACTIVATE CHECKFILECHANGE")
     def checkFileChange():
+        #print("--check filechange--")
         jsonNodes = bpy.data.worlds[0].jsonNodes
 
         reload = False
