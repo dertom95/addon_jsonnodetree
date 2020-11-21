@@ -644,7 +644,7 @@ def createNodeTree(data):
 
                         except NameError as err:
                             print ("error: NameError %s",str(err))
-                            use_use_traceback.print_exc(file=sys.stdout)                
+                            traceback.print_exc(file=sys.stdout)                
                         except TypeError as terr:
                             print ("error: TypeError %s",str(terr))
                             traceback.print_exc(file=sys.stdout)                
@@ -757,7 +757,7 @@ def createNodeTree(data):
 
 
 def createNodeTrees(data):
-    ntUnregister()
+    #ntUnregister()
     global classes
     global node_categories
     global globalData
