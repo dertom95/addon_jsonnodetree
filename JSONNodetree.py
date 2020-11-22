@@ -6,7 +6,8 @@ import base64
 
 
 from JSONNodetreeCustom import Custom
-import JSONNodetreeUtils 
+import JSONNodetreeUtils
+from JSONNodetreeUtils import CreateStringHash
 
 #import rxUtils
 #from rx.subjects import Subject
@@ -678,7 +679,7 @@ def createNodeTree(data):
                     catElems=[]
  
                     for catName in categories.keys():
-                        catElems.append((catName,catName,catName))
+                        catElems.append((catName,catName,catName,CreateStringHash(catName)))
 
                 def dynamicElements(self,context):
                     catEnum = eval("self.%s_cat"%name)

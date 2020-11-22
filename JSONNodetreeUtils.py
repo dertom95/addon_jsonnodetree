@@ -1,4 +1,4 @@
-import bpy
+import bpy,hashlib
 
 idCache = {}
 
@@ -141,3 +141,6 @@ def GetAutoNodetree(space_tree_type,current_object,current_tree):
     else:
         # inconsistend data. a nodetree is referenced that is not known
         feedback("Unknown nodetree(%s) assigned to object %s" % (current_object.nodetreeName,current_object.name))    
+
+def CreateStringHash(st,amountDigits=7):
+    return int(hashlib.sha256(st.encode('utf-8')).hexdigest(), 16) % 10**amountDigits
