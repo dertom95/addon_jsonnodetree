@@ -755,7 +755,20 @@ def createNodeTree(data):
         node_categories.append(MyNodeCategory(data["id"]+"."+catName,catName,items=catItems))
         
 
-
+def convertGlobalDataToEnumItems(key):
+    global globalData
+    elements=[]
+    for elem in globalData[key]:
+        try:
+            descr = elem.get("description",None)
+            id = elem.get("id","noid")
+            name = elem.get("name","noname")
+            number = int(elem.get("number","0"))
+            enumelem=(id,name,descr,number)
+            elements.append(enumelem)
+        except:
+            print("[%s] Problem with: %s" % (key,elem))
+    return elements
 
 def createNodeTrees(data):
     #ntUnregister()
@@ -768,6 +781,19 @@ def createNodeTrees(data):
 
     if "globalData" in data:
         globalData = data["globalData"]
+        try:
+            for global_key in list(globalData.keys()):
+                try:
+                    globalData["%s_elemitems"%global_key]=convertGlobalDataToEnumItems(global_key)
+                except:
+                    print("Could not convert globalData['%s'] to enum-items)" % global_key)
+                    e = sys.exc_info()[0]
+                    print("error:"+str(e))
+        except:
+            e = sys.exc_info()[0]
+            print("error:"+str(e))
+            print("Something went wrong converting globaldata!")
+
     else:
         globalData = None
 
