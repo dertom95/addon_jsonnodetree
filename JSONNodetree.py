@@ -836,6 +836,10 @@ def createNodeTrees(data):
     for nodetree in data["trees"]:
         createNodeTree(nodetree)            
 
+    try:
+        JSONNodetreeUtils.AfterNodeTreeCreationCallback()
+    except:
+        pass
     # create categories
     
 
