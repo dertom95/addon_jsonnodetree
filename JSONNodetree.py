@@ -42,7 +42,7 @@ def loadJSON(filename):
     file = open(filename,"r")
     result = file.read()
     jsonResult = json.loads(result)
-    print("File:"+str(result))
+    #print("File:"+str(result))
     return jsonResult
 
 
@@ -299,13 +299,13 @@ def createNodeTree(data):
     def createNode(data):
         try:
             #exec("Custom.UI_sidebar_"+data["id"]+"_"+propName+"(self,context,layout,propName)")
-            print('data["props"].extend(Custom.UI_props_'+data["id"]+'() )')
+            #print('data["props"].extend(Custom.UI_props_'+data["id"]+'() )')
             exec('data["props"].extend(Custom.UI_props_'+data["id"]+'() )')
             print("successully added custom-props for %s" % data["id"])
         except:
             pass
 
-        print("CREATE NODE:"+str(data))
+        #print("CREATE NODE:"+str(data))
 
         class InnerCustomNode(Node, MyCustomTreeNode):
             # === Basics ===
@@ -467,7 +467,7 @@ def createNodeTree(data):
 
         def createProperty(prop):
             name = "prop_"+prop["name"].replace(" ","_").replace("/","_").replace("-","_");
-            print("CREATE %s" %name)
+            #print("CREATE %s" %name)
             type = prop["type"]
             label = prop.get("label",prop["name"])
             description = prop.get("description",name)
@@ -476,7 +476,7 @@ def createNodeTree(data):
             InnerCustomNode.propTypes[name]=type
             InnerCustomNode.propNameMapping[name]=prop["name"]
 
-            print("prop: %s => %s" % (name,type) )
+            #print("prop: %s => %s" % (name,type) )
             default = None
             if type=="float":
                 mini = prop.get("min",-65535.0)
@@ -523,7 +523,7 @@ def createNodeTree(data):
  #           elif type=="texture":
  #               exec("InnerCustomNode.__annotations__['%s']=bpy.props.EnumProperty(items=get_icons,update=JSONNodetreeUtils.modalStarter)" % name)
             elif type=="enum" or type=="enumPreview":
-                print("2222")
+                #print("2222")
                 default = int(prop.get("default",0));               
                 delimiter="/"        
                 categories={} 
@@ -538,11 +538,8 @@ def createNodeTree(data):
                 elements = []
                 count=0
                 defaultID = None
-                print("2222111")
                 no_category = prop.get("use_category","false").lower()=="false"
-                print("22227777 %s : %s" %(no_category,name))
 
-                print("22228888")
                 if (len(prop["elements"])==0):
                     id = "%s-%i" % (name,count)
                     ename = "No Elements"
@@ -553,9 +550,7 @@ def createNodeTree(data):
                     elements.append((id,ename,descr,icon,number))
                     type="enum"
                 else:
-                    print("2233333322")
                     if type=="enum":
-                        print("2222 %s" %name)
                         for elem in prop["elements"]:
                             id = elem.get("id",("%s-%i" % (name,count)))
                             ename = elem.get("name",("%s-%i" % (name,count)))
@@ -567,14 +562,14 @@ def createNodeTree(data):
                             number = count
                             try:
                                 number = int(elem.get("number",count))
-                                print("FOUND ENUM-Number:%s" % number)
+                                #print("FOUND ENUM-Number:%s" % number)
                                 if number==0:
                                     number=count
                             except:
                                 pass
 
 
-                            print("USING NUMBER:%s" % number)
+                            #print("USING NUMBER:%s" % number)
                             enumelem = (id,ename,descr,icon,number)
                             elements.append(enumelem)
 
@@ -586,16 +581,17 @@ def createNodeTree(data):
                                 if categoryname!="":
                                     add_to_category(categoryname,enumelem)
                             else:
-                                print("NO CATE")
+                                pass
+                                #print("NO CATE")
 
 
                         # find the defaultID (but to be sure take the firstID in case we don't get to the real defaultID)
                             if number==default or defaultID==None:
                                 defaultID=id
-                                print("DEFAULT ID %s" % id)
+                                #print("DEFAULT ID %s" % id)
                             else:
-                                print("NOT DEFAULT ID (%s) %s!=%s" %(id,number,default))
-
+                                #print("NOT DEFAULT ID (%s) %s!=%s" %(id,number,default))
+                                pass
 
                             count = count + 1
                     else: # preview-enum
@@ -605,7 +601,7 @@ def createNodeTree(data):
                                 filename = elem.get("description",None)
                                 if filename:
                                     thumb = pcoll.load(filename,filename,'IMAGE')
-                                    print("THUMB: %s - %s" % (filename,str(thumb.icon_id)))
+                                    #print("THUMB: %s - %s" % (filename,str(thumb.icon_id)))
                                     if not thumb:
                                         print("SOMETHING WENT WRONG WITH THUMB CREATION")
                                         continue
@@ -620,12 +616,12 @@ def createNodeTree(data):
                                     number = count
                                     try:
                                         number = int(elem.get("number",count))
-                                        print("FOUND ENUM-Number:%s thumbid %s" % (number,str(thumb.icon_id)))
+                                        #print("FOUND ENUM-Number:%s thumbid %s" % (number,str(thumb.icon_id)))
                                         if number==0:
                                             number=count
                                     except:
                                         pass
-                                    print("USING NUMBER:%s" % number)
+                                    #print("USING NUMBER:%s" % number)
                                     enumelem=(id,ename,descr,thumb.icon_id,number)
                                     elements.append(enumelem)
 
@@ -688,14 +684,12 @@ def createNodeTree(data):
                     #return categories["all"]
 
                 if len(categories)>1:
-                    print("CREATE InnerCustomNode.__annotations__['%s']=bpy.props.EnumProperty(name='%s'.." % (name,label))
+                    #print("CREATE InnerCustomNode.__annotations__['%s']=bpy.props.EnumProperty(name='%s'.." % (name,label))
                     exec("InnerCustomNode.__annotations__['%s']=bpy.props.EnumProperty(name='%s',items=dynamicElements)" % (name,label))
                     exec("InnerCustomNode.__annotations__['%s_cat']=bpy.props.EnumProperty(name='%s_cat',items=catElems)" % (name,label))
                 else:
-                    print("2:CREATE InnerCustomNode.__annotations__['%s']=bpy.props.EnumProperty(name='%s'.." % (name,label))
+                    #print("2:CREATE InnerCustomNode.__annotations__['%s']=bpy.props.EnumProperty(name='%s'.." % (name,label))
                     try:
-                        print("1:%s " % name)
-                        print(":2:%s "% label)
                         exec("InnerCustomNode.__annotations__['%s']=bpy.props.EnumProperty(name='%s',items=elements,default='%s')" % (name,label,defaultID))
                     except:
                         traceback.print_exc(file=sys.stdout)                  
@@ -741,7 +735,7 @@ def createNodeTree(data):
         
         return InnerCustomNode                       
     
-    print("Create tree: %s" % (data["id"]) )           
+    #print("Create tree: %s" % (data["id"]) )           
     classes.append(MyCustomTree)
     #classes.append(MyNodeCategor)
         
@@ -749,7 +743,7 @@ def createNodeTree(data):
     for nodeData in data["nodes"]:
         createNode(nodeData)
         
-    print("CATEGORYMAP:"+str(categoryMap))    
+    #print("CATEGORYMAP:"+str(categoryMap))    
     # create categories
     for catName,catItems in categoryMap.items():
         node_categories.append(MyNodeCategory(data["id"]+"."+catName,catName,items=catItems))
