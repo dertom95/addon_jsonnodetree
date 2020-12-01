@@ -325,7 +325,7 @@ def createNodeTree(data):
             # http://wiki.blender.org/index.php/Doc:2.6/Manual/Extensions/Python/Properties
             propNames=[]
             propTypes={} # propName=>type(string)
-            
+            customData={}
             # for some reason all type I get from node2.bl_rna.properties['prop'] is FloatProperty....a bug? For now keep a separate dict for all defaultValues
 
             defaultValues ={}
@@ -528,6 +528,7 @@ def createNodeTree(data):
                 delimiter="/"        
                 categories={} 
                 
+                InnerCustomNode.customData["%s_cat"%name]=categories
 
                 def add_to_category(category,elem):
                     if category in categories:
