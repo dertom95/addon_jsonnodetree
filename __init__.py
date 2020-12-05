@@ -127,6 +127,28 @@ class LoadNodetreeOperator(bpy.types.Operator):
 
         return {'FINISHED'} 
 
+class ShowJsonNodetreeOptions(bpy.types.Operator):
+    ''''''
+    bl_idname = "nodetree.full_jsonnodetree"
+    bl_label = "Show all JSON-Nodetree-Options"
+    bl_options = {'REGISTER', 'UNDO'}
+    bl_space_type = 'NODE_EDITOR'
+ 
+    @classmethod
+    def poll(cls, context):
+        return True
+
+    def execute(self, context):
+        jsonNodes = bpy.data.worlds[0].jsonNodes
+        jsonNodes.show_export_panel=True
+        jsonNodes.show_auto_select=True
+        jsonNodes.show_custom_ui_field=True
+        jsonNodes.show_developer=True
+        jsonNodes.show_object_export=True
+        jsonNodes.show_object_mapping=True
+        return {'FINISHED'} 
+
+
 # Export nodetrees
 class ExportNodetreeOperator(bpy.types.Operator):
     ''''''
@@ -256,6 +278,12 @@ def drawJSONFileSettings(self, context):
         row.prop(jsonNodes,"exportPath")
         row = box.row()
         row.operator("nodetree.export")
+
+    if not jsonNodes.show_export_panel and "addon_jsonnodetree" in bpy.context.preferences.addons.keys():
+        box = layout.box()
+        row = box.row()
+        row.operator("nodetree.full_jsonnodetree")
+
 
 
 class NODE_PT_json_nodetree_file(bpy.types.Panel):
@@ -408,7 +436,8 @@ classes = [
     LoadNodetreeOperator,
     NodeTreeCustomData,
     #ModalOperator,
-    IV_Preferences
+    IV_Preferences,
+    ShowJsonNodetreeOptions
 ]
 
 classes_ui = [
@@ -417,6 +446,9 @@ classes_ui = [
 
 def register():
     json_nodetree_register()
+
+
+
     for clazz in classes_ui:
         try:
             bpy.utils.register_class(clazz)
