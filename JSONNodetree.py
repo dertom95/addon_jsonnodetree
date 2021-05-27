@@ -763,7 +763,7 @@ def createNodeTree(data):
             else:
                 raise Exception("Unknown property-type:"+type)
 
-            exec("NodeData.__annotations__['%s_expose']=bpy.props.BoolProperty(description='expose %s')" % (name,label))
+            exec("NodeData.__annotations__['%s_expose']=bpy.props.BoolProperty(description='expose %s',update=check_for_exposed_data)" % (name,label))
             exec("NodeData.__annotations__['%s_exposename']=bpy.props.StringProperty(default='%s',description='expose %s under this name')" % (name,label,label))
             # exec("NodeData.%s_expose=bpy.props.BoolProperty(description='expose %s',update=check_for_exposed_data)" % (name,label))
             # exec("NodeData.%s_exposename=bpy.props.StringProperty(default='%s',description='expose %s under this name')" % (name,label,label))

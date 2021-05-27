@@ -206,7 +206,7 @@ def TreeRemoveInstanceFromTree(tree,obj,force=False):
 
     for i,inst in enumerate(tree.instances):
         if inst.instance_object and inst.instance_object==obj:
-            tree.instance.remove(i)
+            tree.instances.remove(i)
             found=True
             break
 
