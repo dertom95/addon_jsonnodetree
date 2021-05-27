@@ -25,12 +25,15 @@ import JSONNodetree
 import JSONNodetreeUtils
 from bpy.types import Operator
 from bpy.app.handlers import persistent
+from JSONNodetreeUtils import NodeTreeInstance
 
 #import JSONNodeServer
 
 #JSONNodeServer.startServer()
 
 preview_collections = {}
+
+
 
 
 def processNodetreeFromFile():
@@ -351,9 +354,6 @@ class NodeTreeCustomData(bpy.types.PropertyGroup):
     customUIFile : bpy.props.StringProperty(subtype="FILE_PATH")
 
 
-
-
-
 def WriteFile(data, filepath):
     try:
         file = open(filepath, "w")
@@ -430,8 +430,9 @@ if 'checkFileChange' not in globals():
 
         
         return 2.0
-        
+
 classes = [
+    NodeTreeInstance,
     ExportNodetreeOperator,
     LoadNodetreeOperator,
     NodeTreeCustomData,
@@ -484,11 +485,12 @@ def json_nodetree_register():
 
     # link the json-ui config data into world object and access it via byp.data.world[0].jsonNodes
     bpy.types.World.jsonNodes=bpy.props.PointerProperty(type=NodeTreeCustomData)
-
     
     bpy.types.Object.nodetree=bpy.props.PointerProperty(type=bpy.types.NodeTree)
     #bpy.types.Object.nodetreeId = bpy.props.IntProperty(default=-1)
     bpy.types.NodeTree.id = bpy.props.IntProperty(default=-1)
+
+
     bpy.types.Object.id = bpy.props.IntProperty(default=-1)
 #    bpy.types.Texture.id = bpy.props.IntProperty(default=-1)
     bpy.types.Image.id = bpy.props.IntProperty(default=-1)
@@ -523,6 +525,7 @@ def json_nodetree_unregister():
     del bpy.types.NodeTree.id
     del bpy.types.Object.id
     del bpy.types.Image.id
+
     bpy.app.handlers.load_post.remove(load_handler)
 #    rxUtils.disposeAll()
 

@@ -7,6 +7,8 @@ pcoll = None
 class Data:
     pass
 
+class NodeTreeInstance(bpy.types.PropertyGroup):
+    instance_object : bpy.props.PointerProperty(type=bpy.types.Object)
 
 initialized = False
 
@@ -144,3 +146,80 @@ def GetAutoNodetree(space_tree_type,current_object,current_tree):
 
 def CreateStringHash(st,amountDigits=7):
     return int(hashlib.sha256(st.encode('utf-8')).hexdigest(), 16) % 10**amountDigits
+
+def TreeCheckForExposedValues(tree):
+    for node in tree.nodes:
+        for prop_name in node.propNames:
+            if eval("node.nodeData.%s_expose" % prop_name):
+                tree.has_exposed_values=True
+                return
+
+    tree.has_exposed_values=False
+
+def TreeEnsureInstanceForNode(node,obj,create=True):
+    # iterate over instance data and check if there is an instance for this obj already
+    data = None
+
+    for inst_data in node.instance_data:
+        if inst_data and inst_data.instance_object==obj:
+            data = inst_data
+            break
+    if not data and create:
+        data = node.instance_data.add()
+        data.instance_object = obj
+
+    return data
+
+
+def TreeRemoveInstanceFromNode(node,obj):
+    for i,inst_data in enumerate(node.instance_data):
+        if inst_data and inst_data.instance_object==obj:
+            node.instance_data.remove(i)
+            return True
+
+    return False
+
+
+
+def TreeAddInstanceToTree(tree,obj):
+    # iterate over instances and ensure the object is added if not already present
+    found = False
+    for inst in tree.instances:
+        if inst.instance_object and inst.instance_object==obj:
+            found = True
+            break
+
+    if not found:
+        # tell the tree what objects have instances on this nodetree
+        new_instance = tree.instances.add()
+        new_instance.instance_object=obj
+    
+    # now make sure all nodes have instance-data for this obj
+    for node in tree.nodes:
+        if node.exposeData:
+            TreeEnsureInstanceForNode(node,obj)
+
+
+def TreeRemoveInstanceFromTree(tree,obj,force=False):
+    # iterate over instances and ensure the object is added if not already present
+    found=False
+
+    for i,inst in enumerate(tree.instances):
+        if inst.instance_object and inst.instance_object==obj:
+            tree.instance.remove(i)
+            found=True
+            break
+
+    if not found and not force:
+        return
+
+    # now make sure all nodes have instance-data for this obj
+    for node in tree.nodes:
+        TreeRemoveInstanceFromNode(node,obj)
+
+# def TreeEnsureInstanceForAllObjects():
+#     for obj in bpy.data.objects:
+#         if obj:
+#             for nt in obj.nodetrees:
+
+

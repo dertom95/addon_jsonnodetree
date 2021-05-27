@@ -214,6 +214,7 @@ class MyCustomSocket(NodeSocket):
 
 import nodeitems_utils
 from nodeitems_utils import NodeCategory, NodeItem
+from JSONNodetreeUtils import NodeTreeInstance
 
 
 def createNodeTree(data):
@@ -244,6 +245,10 @@ def createNodeTree(data):
         bl_label = data["name"]
         # Icon identifier
         bl_icon = data.get("icon",'NODETREE')
+
+        has_exposed_values : bpy.props.BoolProperty(default=False)
+        instances : bpy.props.CollectionProperty(type=NodeTreeInstance)
+
         
         @classmethod
         def get_from_context(cls, context):
@@ -285,9 +290,15 @@ def createNodeTree(data):
     # Mix-in class for all custom nodes in this tree type.
     # Defines a poll function to enable instantiation.
     class MyCustomTreeNode:
+        exposeData : bpy.props.BoolProperty()
+        #expose_parent :bpy.props.PointerProperty(type=bpy.types.Object)
+
         @classmethod
         def poll(cls, ntree):
+            print("%s (%s)" % (cls,type(cls)))
+            #return False
             return ntree.bl_idname == data["id"]
+
         
     # our own base class with an appropriate poll function,
     # so the categories only show up in our own tree type
@@ -306,6 +317,17 @@ def createNodeTree(data):
             pass
 
         #print("CREATE NODE:"+str(data))
+        if data["name"]=="CrowdAgent":
+            a=0
+
+        properties=data.get("props",[])
+
+        class NodeData(bpy.types.PropertyGroup):
+            __annotations__={
+                "instance_object" : bpy.props.PointerProperty(type=bpy.types.Object)
+            }
+
+        #bpy.utils.register_class(NodeData)
 
         class InnerCustomNode(Node, MyCustomTreeNode):
             # === Basics ===
@@ -333,6 +355,10 @@ def createNodeTree(data):
             propNameMapping={} # map property-conformont name with original name (e.g. 'Occlusion_Culling' =>  'Occluision Culling')
 
             __annotations__={}
+
+            nodeData : bpy.props.PointerProperty(type=NodeData)
+            instance_data : bpy.props.CollectionProperty(type=NodeData)
+
             
             # === Optional Functions ===
             # Initialization function, called when a new node is created.
@@ -372,7 +398,9 @@ def createNodeTree(data):
 
             # Additional buttons displayed on the node.
             def draw_buttons(self, context, layout):
-                layout.label(text="Node settings")
+                row = layout.row()
+                row.label(text="Node settings")
+                row.prop(self,"exposeData",text="")
 
                 try:
                     # here you have the chance to add additional buttons at the bottom
@@ -397,16 +425,22 @@ def createNodeTree(data):
                         propType = self.propTypes[propName]
 
                         parent = layout
+                        row = parent.row()
 
 
-                        if hasattr(self,propName+"_cat"):
+                        is_exposed = eval("self.nodeData.%s_expose" % propName)
+                        if is_exposed:
+                            parent = parent.box()
+                            row = parent.row()
+
+                        if hasattr(self.nodeData,propName+"_cat"):
                             parent = layout.box()
                             row = parent.row()
                             row.label(text=data["name"])
 
                             row = parent.row()
                             try:
-                                row.prop(self,propName+"_cat",text="category")
+                                row.prop(self.nodeData,propName+"_cat",text="category")
                             except:
                                 pass
                         else:
@@ -414,11 +448,23 @@ def createNodeTree(data):
 
                         if propType == "enumPreview":
                             #print("Check: %s %s" % (self.name,propName))
-                            parent.template_icon_view(self,propName,show_labels=True)
-                            parent.prop(self,propName)
+                            row.template_icon_view(self.nodeData,propName,show_labels=True)
+                            row.prop(self.nodeData,propName)
                         else:
                             # standard view
-                            parent.prop(self,propName)
+                            row.prop(self.nodeData,propName)
+                        
+                        if self.exposeData:
+                            box = row.box()
+                            box.prop(self.nodeData,"%s_expose" % propName,text="")
+                            propExposed = eval("self.nodeData.%s_expose"%propName)
+                            if propExposed:
+                                row = parent.row()
+                                row.prop(self.nodeData,"%s_exposename" % propName,text="expose as:")
+                        else:
+                            if is_exposed:
+                                row.label(text="",icon="EVENT_E")
+
 
                 try:
                     # here you have the chance to add additional buttons at the bottom
@@ -444,10 +490,10 @@ def createNodeTree(data):
                     except:
                         propType = self.propTypes[propName]
                         if propType == "texture":
-                            layout.template_icon_view(self,propName)
+                            layout.template_icon_view(self.nodeData,propName)
                         else:
                             # standard view
-                            layout.prop(self,propName)
+                            layout.prop(self.nodeData,propName)
 
                 try:
                     # here you have the chance to add additional buttons
@@ -465,7 +511,14 @@ def createNodeTree(data):
         def export(self):
             print("EXPORT") 
 
+
+
         def createProperty(prop):
+            def check_for_exposed_data(self,context):
+                tree = context.node.id_data
+                JSONNodetreeUtils.TreeCheckForExposedValues(tree)
+                
+            nonlocal NodeData
             name = "prop_"+prop["name"].replace(" ","_").replace("/","_").replace("-","_");
             #print("CREATE %s" %name)
             type = prop["type"]
@@ -486,13 +539,17 @@ def createNodeTree(data):
                 precision = prop.get("precision",3)
                 unit = prop.get("unit","NONE")
                 default = prop.get("default",0.0)
-                exec("InnerCustomNode.__annotations__['%s']=bpy.props.FloatProperty(subtype='%s',name='%s',default=%s,description='%s',min=%s,max=%s,step=%s,unit='%s',precision=%s)" % ( name,subtype,label,default,description,mini,maxi,step,unit,precision ))
+                exec("NodeData.__annotations__['%s']=bpy.props.FloatProperty(subtype='%s',name='%s',default=%s,description='%s',min=%s,max=%s,step=%s,unit='%s',precision=%s)" % ( name,subtype,label,default,description,mini,maxi,step,unit,precision ))
+                print("NodeData.%s=bpy.props.FloatProperty(subtype='%s',name='%s',default=%s,description='%s',min=%s,max=%s,step=%s,unit='%s',precision=%s)" % ( name,subtype,label,default,description,mini,maxi,step,unit,precision ))
+                #exec("NodeData.%s=bpy.props.FloatProperty(subtype='%s',name='%s',default=%s,description='%s',min=%s,max=%s,step=%s,unit='%s',precision=%s)" % ( name,subtype,label,default,description,mini,maxi,step,unit,precision ))
             elif type=="string":
                 default = prop.get("default","")
-                exec("InnerCustomNode.__annotations__['%s']=bpy.props.StringProperty(name='%s',default='%s',description='%s')" % ( name,label,default,description ))
+                exec("NodeData.__annotations__['%s']=bpy.props.StringProperty(name='%s',default='%s',description='%s')" % ( name,label,default,description ))
+                # exec("NodeData.%s=bpy.props.StringProperty(name='%s',default='%s',description='%s')" % ( name,label,default,description ))
             elif type=="bool":
                 default = prop.get("default","False")=="true"
-                exec("InnerCustomNode.__annotations__['%s']=bpy.props.BoolProperty(name='%s',default=%s,description='%s')" % ( name,label,default,description ))
+                exec("NodeData.__annotations__['%s']=bpy.props.BoolProperty(name='%s',default=%s,description='%s')" % ( name,label,default,description ))
+                # exec("NodeData.%s=bpy.props.BoolProperty(name='%s',default=%s,description='%s')" % ( name,label,default,description ))
             elif type=="int":
                 mini = prop.get("min",-65535)
                 maxi = prop.get("max",65535)
@@ -503,25 +560,31 @@ def createNodeTree(data):
                     default = int(prop.get("default",0))
                 except:
                     default = 0
-                exeStr = "InnerCustomNode.__annotations__['%s']=bpy.props.IntProperty(subtype='%s',name='%s',default=%s,description='%s',min=%s,max=%s,step=%s)" % ( name,subtype,label,default,description,mini,maxi,step )
+                exeStr = "NodeData.__annotations__['%s']=bpy.props.IntProperty(subtype='%s',name='%s',default=%s,description='%s',min=%s,max=%s,step=%s)" % ( name,subtype,label,default,description,mini,maxi,step )
+                # exeStr = "NodeData.%s=bpy.props.IntProperty(subtype='%s',name='%s',default=%s,description='%s',min=%s,max=%s,step=%s)" % ( name,subtype,label,default,description,mini,maxi,step )
                 exec(exeStr)
             elif type=="vector2":
                 default = prop.get("default",(0.0,0.0));
-                exec("InnerCustomNode.__annotations__['%s']=bpy.props.FloatVectorProperty(name='%s',default=%s,size=2,description='%s')" % ( name,label,default,description ))
+                exec("NodeData.__annotations__['%s']=bpy.props.FloatVectorProperty(name='%s',default=%s,size=2,description='%s')" % ( name,label,default,description ))
+                # exec("NodeData.%s=bpy.props.FloatVectorProperty(name='%s',default=%s,size=2,description='%s')" % ( name,label,default,description ))
             elif type=="vector3":
                 default = prop.get("default",None) or (0.0,0.0,0.0)
-                exec("InnerCustomNode.__annotations__['%s']=bpy.props.FloatVectorProperty(name='%s',default=%s,size=3,description='%s')" % ( name,label,default,description ))
+                exec("NodeData.__annotations__['%s']=bpy.props.FloatVectorProperty(name='%s',default=%s,size=3,description='%s')" % ( name,label,default,description ))
+                # exec("NodeData.%s=bpy.props.FloatVectorProperty(name='%s',default=%s,size=3,description='%s')" % ( name,label,default,description ))
             elif type=="vector4":
                 default = eval(prop.get("default",(0.0,0.0,0.0,0.0)));
-                exec("InnerCustomNode.__annotations__['%s']=bpy.props.FloatVectorProperty(name='%s',default=%s,size=4,description='%s')" % ( name,label,default,description ))
+                exec("NodeData.__annotations__['%s']=bpy.props.FloatVectorProperty(name='%s',default=%s,size=4,description='%s')" % ( name,label,default,description ))
+                # exec("NodeData.%s=bpy.props.FloatVectorProperty(name='%s',default=%s,size=4,description='%s')" % ( name,label,default,description ))
             elif type=="color":
                 default = eval(prop.get("default",(1.0,1.0,1.0,1.0)));
-                exec("InnerCustomNode.__annotations__['%s']=bpy.props.FloatVectorProperty(name='%s',default=%s,size=4,subtype='COLOR',description='%s',min=0.0,max=1.0 )" % ( name,label,default,description))
+                exec("NodeData.__annotations__['%s']=bpy.props.FloatVectorProperty(name='%s',default=%s,size=4,subtype='COLOR',description='%s',min=0.0,max=1.0 )" % ( name,label,default,description))
+                # exec("NodeData.%s=bpy.props.FloatVectorProperty(name='%s',default=%s,size=4,subtype='COLOR',description='%s',min=0.0,max=1.0 )" % ( name,label,default,description))
             elif type=="collection":
                 default = prop.get("default",0.0);
-                exec("InnerCustomNode.__annotations__['%s']=bpy.props.CollectionProperty(type=DefaultCollection,description='%s')" % ( name ))
+                exec("NodeData.__annotations__['%s']=bpy.props.CollectionProperty(type=DefaultCollection,description='%s')" % ( name ))
+                # exec("NodeData.%s=bpy.props.CollectionProperty(type=DefaultCollection,description='%s')" % ( name ))
  #           elif type=="texture":
- #               exec("InnerCustomNode.__annotations__['%s']=bpy.props.EnumProperty(items=get_icons,update=JSONNodetreeUtils.modalStarter)" % name)
+ #               exec("NodeData.__annotations__['%s']=bpy.props.EnumProperty(items=get_icons,update=JSONNodetreeUtils.modalStarter)" % name)
             elif type=="enum" or type=="enumPreview":
                 #print("2222")
                 default = int(prop.get("default",0));               
@@ -686,21 +749,29 @@ def createNodeTree(data):
 
                 if len(categories)>1:
                     #print("CREATE InnerCustomNode.__annotations__['%s']=bpy.props.EnumProperty(name='%s'.." % (name,label))
-                    exec("InnerCustomNode.__annotations__['%s']=bpy.props.EnumProperty(name='%s',items=dynamicElements)" % (name,label))
-                    exec("InnerCustomNode.__annotations__['%s_cat']=bpy.props.EnumProperty(name='%s_cat',items=catElems)" % (name,label))
+                    exec("NodeData.__annotations__['%s']=bpy.props.EnumProperty(name='%s',items=dynamicElements)" % (name,label))
+                    exec("NodeData.__annotations__['%s_cat']=bpy.props.EnumProperty(name='%s_cat',items=catElems)" % (name,label))
+                    # exec("NodeData.%s=bpy.props.EnumProperty(name='%s',items=dynamicElements)" % (name,label))
+                    # exec("NodeData.%s_cat=bpy.props.EnumProperty(name='%s_cat',items=catElems)" % (name,label))
                 else:
                     #print("2:CREATE InnerCustomNode.__annotations__['%s']=bpy.props.EnumProperty(name='%s'.." % (name,label))
                     try:
-                        exec("InnerCustomNode.__annotations__['%s']=bpy.props.EnumProperty(name='%s',items=elements,default='%s')" % (name,label,defaultID))
+                        exec("NodeData.__annotations__['%s']=bpy.props.EnumProperty(name='%s',items=elements,default='%s')" % (name,label,defaultID))
+#                        exec("NodeData.%s=bpy.props.EnumProperty(name='%s',items=elements,default='%s')" % (name,label,defaultID))
                     except:
                         traceback.print_exc(file=sys.stdout)                  
             else:
                 raise Exception("Unknown property-type:"+type)
 
+            exec("NodeData.__annotations__['%s_expose']=bpy.props.BoolProperty(description='expose %s')" % (name,label))
+            exec("NodeData.__annotations__['%s_exposename']=bpy.props.StringProperty(default='%s',description='expose %s under this name')" % (name,label,label))
+            # exec("NodeData.%s_expose=bpy.props.BoolProperty(description='expose %s',update=check_for_exposed_data)" % (name,label))
+            # exec("NodeData.%s_exposename=bpy.props.StringProperty(default='%s',description='expose %s under this name')" % (name,label,label))
+
+
             if default:
                 InnerCustomNode.defaultValues[name]=default
 
-        properties=data.get("props",[])
 
 
         items = []
@@ -732,8 +803,9 @@ def createNodeTree(data):
 
         category.append(NodeItem(data["id"]))        
         # push the node to the registry
+        classes.append(NodeData)
         classes.append(InnerCustomNode)
-        
+
         return InnerCustomNode                       
     
     #print("Create tree: %s" % (data["id"]) )           
