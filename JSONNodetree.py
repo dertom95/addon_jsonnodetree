@@ -50,7 +50,7 @@ def feedback(output,type=""):
     print("Feedback: %s" % output)
 
 def propValue(node,propName):
-    prop = eval("node.%s" % propName)
+    prop = eval("node.nodeData.%s" % propName)
     propType = node.propTypes[propName]
     if (propType in ["vector4","vector3","vector2","color"]):
         output="("
@@ -142,7 +142,7 @@ def exportNodes(nodetree,onlyValueDifferentFromDefault=False):
                 print("Couldnt mapback:%s",propName)
                 mapBackName = propName[5:]
             
-            propertyDefault = eval("node.bl_rna.properties['"+propName+"']").default
+            propertyDefault = eval("node.nodeData.bl_rna.properties['"+propName+"']").default
             
             prop = { 
          #       "name" : propName[5:],
@@ -154,7 +154,7 @@ def exportNodes(nodetree,onlyValueDifferentFromDefault=False):
 
             if onlyValueDifferentFromDefault:
                 try:
-                    print("node.bl_rna.properties['"+propName+"'].default")
+                    print("node.nodeData.bl_rna.properties['"+propName+"'].default")
                     
                     if prop["value"]!=str(propertyDefault):
                         # value changed
