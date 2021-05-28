@@ -167,6 +167,9 @@ def TreeEnsureInstanceForNode(node,obj,create=True):
     if not data and create:
         data = node.instance_data.add()
         data.instance_object = obj
+        data.instance_tree = node.id_data
+        for prop_name in node.propNames:
+            exec("data.%s_expose=False" % prop_name)
 
     return data
 
@@ -183,11 +186,7 @@ def TreeRemoveInstanceFromNode(node,obj):
 
 def TreeAddInstanceToTree(tree,obj):
     # iterate over instances and ensure the object is added if not already present
-    found = False
-    for inst in tree.instances:
-        if inst.instance_object and inst.instance_object==obj:
-            found = True
-            break
+    found = TreeHasInstanceForObject(tree,obj)
 
     if not found:
         # tell the tree what objects have instances on this nodetree
@@ -216,6 +215,29 @@ def TreeRemoveInstanceFromTree(tree,obj,force=False):
     # now make sure all nodes have instance-data for this obj
     for node in tree.nodes:
         TreeRemoveInstanceFromNode(node,obj)
+
+def TreeHasInstanceForObject(tree,obj):
+    for inst in tree.instances:
+        if inst.instance_object and inst.instance_object==obj:
+            return True
+
+    return False
+
+def TreeResetValueForInstanceProperty(tree,obj,param_name,search_expose_name):
+    for node in tree.nodes:
+        try:
+            expose_name = eval("node.nodeData.%s_exposename"%param_name)
+            if expose_name == search_expose_name:
+                inst_data = TreeEnsureInstanceForNode(node,obj)
+                if not inst_data:
+                    # error. no instance data?
+                    return
+                value = eval("node.nodeData.%s" % param_name)
+                exec("inst_data.%s=value" % param_name)
+                exec("inst_data.%s_expose=False" % param_name)
+        except:
+            pass
+
 
 # def TreeEnsureInstanceForAllObjects():
 #     for obj in bpy.data.objects:
