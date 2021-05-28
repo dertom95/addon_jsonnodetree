@@ -49,8 +49,15 @@ def loadJSON(filename):
 def feedback(output,type=""):
     print("Feedback: %s" % output)
 
-def propValue(node,propName):
-    prop = eval("node.nodeData.%s" % propName)
+def propValue(treeOwner,node,propName):
+    is_exposed_prop = eval("node.nodeData.%s_expose" % propName)
+
+    if is_exposed_prop and treeOwner:
+        instance_data = JSONNodetreeUtils.TreeEnsureInstanceForNode(node,treeOwner,False)
+        prop = eval("instance_data.%s" % propName)
+    else:        
+        prop = eval("node.nodeData.%s" % propName)
+
     propType = node.propTypes[propName]
     if (propType in ["vector4","vector3","vector2","color"]):
         output="("
@@ -85,7 +92,7 @@ def exportScene(scene):
     return objectNodetreeMapping
 
 
-def exportNodes(nodetree,onlyValueDifferentFromDefault=False):
+def exportNodes(treeOwner,nodetree,onlyValueDifferentFromDefault=False):
     tree = {
         "name" : nodetree.name,
         "nodes": [],
@@ -147,7 +154,7 @@ def exportNodes(nodetree,onlyValueDifferentFromDefault=False):
             prop = { 
          #       "name" : propName[5:],
                 "name" : mapBackName,
-                "value" : propValue(node,propName),
+                "value" : propValue(treeOwner,node,propName),
                 "type"  : node.propTypes[propName],
                 "default" : propertyDefault
             }
@@ -1087,6 +1094,8 @@ def createNodeTrees(data):
         JSONNodetreeUtils.AfterNodeTreeCreationCallback()
     except:
         pass
+
+    #JSONNodetreeUtils.CheckAllObjectNodetreeInstances()
     # create categories
     
 

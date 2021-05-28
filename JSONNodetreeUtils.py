@@ -198,7 +198,7 @@ def TreeAddInstanceToTree(tree,obj):
         TreeEnsureInstanceForNode(node,obj)
 
 
-def TreeRemoveInstanceFromTree(tree,obj,force=False):
+def TreeRemoveInstanceFromTree(tree,obj,force=True):
     # iterate over instances and ensure the object is added if not already present
     found=False
 
@@ -258,7 +258,25 @@ def TreeUpdateExposedNames(tree,update_prop_name=""):
                 exec("inst.%s_exposename=expose_name" % prop_name)
                 exec("inst.%s_exposename_last=expose_name" % prop_name)
 
-
+def CheckAllObjectNodetreeInstances():
+    for tree in bpy.data.node_groups:
+        for idx in range(len(tree.instances)-1, -1, -1):
+            inst = tree.instances[idx]
+            obj = inst.instance_object
+            if (not obj):
+                continue
+            
+            found = False
+            for treeinfo in obj.nodetrees:
+                _tree = treeinfo.nodetreePointer
+                if not _tree:
+                    continue
+                if _tree == tree:
+                    found = True
+                    break
+            
+            if not found:
+                tree.instances.remove(idx)
 
 
 # def TreeEnsureInstanceForAllObjects():
