@@ -194,8 +194,8 @@ def TreeAddInstanceToTree(tree,obj):
     
     # now make sure all nodes have instance-data for this obj
     for node in tree.nodes:
-        if node.exposeData:
-            TreeEnsureInstanceForNode(node,obj)
+#        if node.exposeData:
+        TreeEnsureInstanceForNode(node,obj)
 
 
 def TreeRemoveInstanceFromTree(tree,obj,force=False):

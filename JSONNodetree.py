@@ -390,6 +390,10 @@ def createNodeTree(data):
                     newsocket = self.outputs.new(btype,name)
                     if defaultValue:
                         newsocket.default_value=defaultValue
+
+                tree = self.id_data
+                for inst in tree.instances:
+                    JSONNodetreeUtils.TreeAddInstanceToTree(tree,inst.instance_object)
                     
                     
             # Copy function to initialize a copied node from an existing one.
@@ -534,20 +538,28 @@ def createNodeTree(data):
             InnerCustomNode.propNameMapping[name]=prop["name"]
 
             def check_for_exposed_data(self,context):
-                nonlocal name
+                nonlocal name, in_process
 
-                if self.instance_object:
-                    # this is an instance
-                    modified = eval("self.%s_expose"%name)
-                    if not modified:
-                        exposed_name = eval("self.%s_exposename"%name)
-                        tree = self.instance_tree
-                        JSONNodetreeUtils.TreeResetValueForInstanceProperty(tree,self.instance_object,name,exposed_name)
-
+                if self in in_process:
                     return
-                        
-                tree = context.node.id_data
-                JSONNodetreeUtils.TreeCheckForExposedValues(tree)
+
+                in_process[self]=True
+
+                try:
+                    if self.instance_object:
+                        # this is an instance
+                        modified = eval("self.%s_expose"%name)
+                        if not modified:
+                            exposed_name = eval("self.%s_exposename"%name)
+                            tree = self.instance_tree
+                            JSONNodetreeUtils.TreeResetValueForInstanceProperty(tree,self.instance_object,name,exposed_name)
+
+                        return
+                            
+                    tree = context.node.id_data
+                    JSONNodetreeUtils.TreeCheckForExposedValues(tree)
+                finally:
+                    in_process.pop(self,None)
 
             # def set_exposeName(self,value):
             #     nonlocal name,expose_names,in_process
