@@ -2,7 +2,7 @@ import json
 import bpy
 import sys, traceback
 from bpy.types import NodeTree, Node, NodeSocket
-import base64
+import base64, random
 
 
 from JSONNodetreeCustom import Custom
@@ -322,6 +322,9 @@ def createNodeTree(data):
 
         properties=data.get("props",[])
 
+        in_process={}
+        expose_names={}
+
         class NodeData(bpy.types.PropertyGroup):
             __annotations__={
                 "instance_object" : bpy.props.PointerProperty(type=bpy.types.Object),
@@ -545,6 +548,110 @@ def createNodeTree(data):
                         
                 tree = context.node.id_data
                 JSONNodetreeUtils.TreeCheckForExposedValues(tree)
+
+            # def set_exposeName(self,value):
+            #     nonlocal name,expose_names,in_process
+            #     if self in in_process:
+            #         return
+
+            #     in_process[self]=True
+
+            #     try:
+            #         key = "%s_exposename"%name
+            #         exec("self.%s=value"%key)
+            #         if True:
+            #             return
+            #     finally:
+            #         in_process.pop(self,None)
+                    
+
+            #     is_instance = self.instance_object is not None
+
+            #     if is_instance or self in in_process:
+            #         #instances are not allowed to change the expose_name
+            #         return 
+
+            #     old_value = eval("self.%s_exposename" % name)
+                
+            #     if value == old_value:
+            #         return # nothing to do
+
+            #     # check if new value is still available
+            #     post_fix=""
+            #     tries=0
+
+            #     while "%s%s" % (value,post_fix) in expose_names:
+            #         post_fix="." + str(tries).zfill(3)
+            #         tries = tries + 1
+
+            #     new_value = "%s%s" % (value,post_fix)
+            #     key = "%s_exposename"%name
+            #     self[key]=new_value
+            #     val = self["%s_exposename"%name]
+            #     #exec("self.%s_exposename=new_value" % name)
+            #     in_process.pop(self,None)
+
+            #     def execute_later():
+            #         nonlocal self,key,new_value
+            #         self[key]=new_value
+                    
+            #     #execution_queue.queue_action(execute_later)
+                
+            #     tree = self.id_data    
+            #     #JSONNodetreeUtils.TreeUpdateExposedNames(tree,"%s_exposename" % name)
+
+
+            def update_exposename(self,context):
+                nonlocal name,in_process,expose_names
+
+                if self in in_process:
+                    return
+
+                in_process[self]=True
+
+                try:
+                    is_instance = self.instance_object is not None
+
+                    current_expose_name = eval("self.%s_exposename"%name)
+                    expose_name_before = eval("self.%s_exposename_last"%name)
+
+                    if current_expose_name == expose_name_before:
+                        return
+
+                    if is_instance:
+                        # don't call update for instances
+                        JSONNodetreeUtils.TreeUpdateExposedNames(self.instance_tree,name)
+                        return
+
+                    node = context.node
+                    if not node:
+                        return
+
+
+
+                    # check if new value is still available
+                    if current_expose_name in expose_names:
+                        post_fix=""
+                        tries=0
+
+                        while "%s%s" % (current_expose_name,post_fix) in expose_names:
+                            post_fix="." + str(tries).zfill(3)
+                            tries = tries + 1                    
+                        
+                        current_expose_name = "%s%s" % (current_expose_name,post_fix)
+
+                        exec("self.%s_exposename=current_expose_name" % name)
+
+                    tree = node.id_data
+
+                    JSONNodetreeUtils.TreeUpdateExposedNames(tree,name)
+                finally:
+                    in_process.pop(self,None)
+
+
+
+
+
 
             def updated_node_value(self,context):
                 nonlocal name
@@ -822,7 +929,10 @@ def createNodeTree(data):
                 raise Exception("Unknown property-type:"+type)
 
             exec("NodeData.__annotations__['%s_expose']=bpy.props.BoolProperty(description='expose %s',update=check_for_exposed_data)" % (name,label))
-            exec("NodeData.__annotations__['%s_exposename']=bpy.props.StringProperty(default='%s',description='expose %s under this name')" % (name,label,label))
+            exec("NodeData.__annotations__['%s_exposename']=bpy.props.StringProperty(default='%s',description='expose %s under this name',update=update_exposename)" % (name,label,label))
+            # super-hacky but for some reason I cannot use setter-function with this dynamic-approach.... self[key] is not found....
+            exec("NodeData.__annotations__['%s_exposename_last']=bpy.props.StringProperty(default='%s')" % (name,label))
+           # exec("NodeData.__annotations__['%s_exposename']=bpy.props.StringProperty(default='%s',description='expose %s under this name')" % (name,label,label))
             # exec("NodeData.%s_expose=bpy.props.BoolProperty(description='expose %s',update=check_for_exposed_data)" % (name,label))
             # exec("NodeData.%s_exposename=bpy.props.StringProperty(default='%s',description='expose %s under this name')" % (name,label,label))
 

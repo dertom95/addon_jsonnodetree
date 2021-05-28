@@ -183,7 +183,6 @@ def TreeRemoveInstanceFromNode(node,obj):
     return False
 
 
-
 def TreeAddInstanceToTree(tree,obj):
     # iterate over instances and ensure the object is added if not already present
     found = TreeHasInstanceForObject(tree,obj)
@@ -235,8 +234,31 @@ def TreeResetValueForInstanceProperty(tree,obj,param_name,search_expose_name):
                 value = eval("node.nodeData.%s" % param_name)
                 exec("inst_data.%s=value" % param_name)
                 exec("inst_data.%s_expose=False" % param_name)
+                exec("inst_data.%s_exposename=expose_name" % param_name)
+                exec("inst_data.%s_exposename_last=expose_name" % param_name)
         except:
             pass
+
+def TreeUpdateExposedNames(tree,update_prop_name=""):
+    update_all = update_prop_name==""
+    for node in tree.nodes:
+        if not node.exposeData:
+            continue
+
+        for prop_name in node.propNames:
+            if not (update_all or prop_name == update_prop_name):
+                continue
+            
+            is_exposed = eval("node.nodeData.%s_expose" % prop_name)
+            if not is_exposed:
+                continue
+                
+            expose_name = eval("node.nodeData.%s_exposename" % prop_name)
+            for inst in node.instance_data:
+                exec("inst.%s_exposename=expose_name" % prop_name)
+                exec("inst.%s_exposename_last=expose_name" % prop_name)
+
+
 
 
 # def TreeEnsureInstanceForAllObjects():
