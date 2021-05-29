@@ -1095,7 +1095,7 @@ def createNodeTrees(data):
     except:
         pass
 
-    #JSONNodetreeUtils.CheckAllObjectNodetreeInstances()
+    #
     # create categories
     
 
