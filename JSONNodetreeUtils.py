@@ -147,14 +147,25 @@ def GetAutoNodetree(space_tree_type,current_object,current_tree):
 def CreateStringHash(st,amountDigits=7):
     return int(hashlib.sha256(st.encode('utf-8')).hexdigest(), 16) % 10**amountDigits
 
+def NodeHasExposedValues(node):
+    for prop_name in node.propNames:
+        if eval("node.nodeData.%s_expose" % prop_name):
+            return True
+    return False
+
 def TreeCheckForExposedValues(tree):
     for node in tree.nodes:
-        for prop_name in node.propNames:
-            if eval("node.nodeData.%s_expose" % prop_name):
-                tree.has_exposed_values=True
-                return
+        if NodeHasExposedValues(node):
+            tree.has_exposed_values=True
+            return
 
     tree.has_exposed_values=False
+
+def TreeHasNodeOfType(tree,idname):
+    for node in tree.nodes:
+        if node.bl_idname==idname:
+            return True
+    return False
 
 def TreeEnsureInstanceForNode(node,obj,create=True):
     # iterate over instance data and check if there is an instance for this obj already
@@ -277,6 +288,8 @@ def CheckAllObjectNodetreeInstances():
             
             if not found:
                 tree.instances.remove(idx)
+
+
 
 
 # def TreeEnsureInstanceForAllObjects():

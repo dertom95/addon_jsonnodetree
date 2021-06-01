@@ -7,13 +7,12 @@ import base64, random
 
 from JSONNodetreeCustom import Custom
 import JSONNodetreeUtils
-from JSONNodetreeUtils import CreateStringHash
+from JSONNodetreeUtils import CreateStringHash,NodeHasExposedValues
+import JSONProxyNodetree
 
 #import rxUtils
 #from rx.subjects import Subject
-
-
-
+      
 
 class DefaultCollection(bpy.types.PropertyGroup):
     name : bpy.props.StringProperty(default="")
@@ -53,8 +52,13 @@ def propValue(treeOwner,node,propName):
     is_exposed_prop = eval("node.nodeData.%s_expose" % propName)
 
     if is_exposed_prop and treeOwner:
-        instance_data = JSONNodetreeUtils.TreeEnsureInstanceForNode(node,treeOwner,False)
-        prop = eval("instance_data.%s" % propName)
+#        instance_data = JSONNodetreeUtils.TreeEnsureInstanceForNode(node,treeOwner,False)
+        instance_data = JSONNodetreeUtils.TreeEnsureInstanceForNode(node,treeOwner)
+        try:
+            prop = eval("instance_data.%s" % propName)
+        except:
+            print("error in node:%s with propName:%s" %(node.name,propName))
+            traceback.print_exc(file=sys.stdout)             
     else:        
         prop = eval("node.nodeData.%s" % propName)
 
@@ -224,8 +228,14 @@ from nodeitems_utils import NodeCategory, NodeItem
 from JSONNodetreeUtils import NodeTreeInstance
 
 
+
 def createNodeTree(data):
-    
+    # our own base class with an appropriate poll function,
+    # so the categories only show up in our own tree type
+    class MyNodeCategory(NodeCategory):
+        @classmethod
+        def poll(cls, context):
+            return context.space_data.tree_type == data["id"]    
     categoryMap={}
     
     def jsontype2NodeType(jsontype):
@@ -307,12 +317,7 @@ def createNodeTree(data):
             return ntree.bl_idname == data["id"]
 
         
-    # our own base class with an appropriate poll function,
-    # so the categories only show up in our own tree type
-    class MyNodeCategory(NodeCategory):
-        @classmethod
-        def poll(cls, context):
-            return context.space_data.tree_type == data["id"]
+
         
     def createNode(data):
         try:
@@ -324,9 +329,6 @@ def createNodeTree(data):
             pass
 
         #print("CREATE NODE:"+str(data))
-        if data["name"]=="CrowdAgent":
-            a=0
-
         properties=data.get("props",[])
 
         in_process={}
@@ -367,8 +369,8 @@ def createNodeTree(data):
 
             __annotations__={}
 
-            nodeData : bpy.props.PointerProperty(type=NodeData)
-            instance_data : bpy.props.CollectionProperty(type=NodeData)
+            nodeData : bpy.props.PointerProperty(type=NodeData)             # the default property view
+            instance_data : bpy.props.CollectionProperty(type=NodeData)     # values of objects using the nodetree but overriding values
 
             
             # === Optional Functions ===
@@ -688,7 +690,11 @@ def createNodeTree(data):
                 if not is_exposed:
                     return
 
-                node = context.node
+                node=None
+                try:
+                    node = context.node
+                except:
+                    print("NO NODE in update_node_value:%s"%name)
                 #propagate value-change to all unchanged instances
 
                 if not node:
@@ -1092,6 +1098,11 @@ def createNodeTrees(data):
 
     try:
         JSONNodetreeUtils.AfterNodeTreeCreationCallback()
+    except:
+        pass
+
+    try:
+        JSONProxyNodetree.CreateProxyNodetree()
     except:
         pass
 
