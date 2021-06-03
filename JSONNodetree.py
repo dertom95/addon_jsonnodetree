@@ -10,6 +10,7 @@ from JSONNodetreeCustom import Custom
 import JSONNodetreeUtils
 from JSONNodetreeUtils import CreateStringHash,NodeHasExposedValues
 import JSONProxyNodetree
+from JSONProxyNodetree import GetCollectionInstanceDetail, EnsureProxyDataForCollectionRoot, CreateProxyNodetree, refresh_libraries
 
 #import rxUtils
 #from rx.subjects import Subject
@@ -49,12 +50,19 @@ def loadJSON(filename):
 def feedback(output,type=""):
     print("Feedback: %s" % output)
 
-def propValue(treeOwner,node,propName):
+def propValue(treeOwner,node,propName,collection_root):
     is_exposed_prop = eval("node.nodeData.%s_expose" % propName)
 
     if is_exposed_prop and treeOwner:
 #        instance_data = JSONNodetreeUtils.TreeEnsureInstanceForNode(node,treeOwner,False)
-        instance_data = JSONNodetreeUtils.TreeEnsureInstanceForNode(node,treeOwner)
+        if collection_root:
+            col_instance_data = EnsureProxyDataForCollectionRoot(collection_root,False)
+            linked_obj = treeOwner # just to point out, that obj is the object being linked from within the collection
+            tree=node.id_data
+            instance_data = GetCollectionInstanceDetail(col_instance_data,linked_obj,tree,node)
+        else:
+            instance_data = JSONNodetreeUtils.TreeEnsureInstanceForNode(node,treeOwner)
+
         try:
             prop = eval("instance_data.%s" % propName)
         except:
@@ -97,7 +105,7 @@ def exportScene(scene):
     return objectNodetreeMapping
 
 
-def exportNodes(treeOwner,nodetree,onlyValueDifferentFromDefault=False):
+def exportNodes(treeOwner,nodetree,onlyValueDifferentFromDefault=False,collection_root=None):
     tree = {
         "name" : nodetree.name,
         "nodes": [],
@@ -159,7 +167,7 @@ def exportNodes(treeOwner,nodetree,onlyValueDifferentFromDefault=False):
             prop = { 
          #       "name" : propName[5:],
                 "name" : mapBackName,
-                "value" : propValue(treeOwner,node,propName),
+                "value" : propValue(treeOwner,node,propName,collection_root),
                 "type"  : node.propTypes[propName],
                 "default" : propertyDefault
             }
