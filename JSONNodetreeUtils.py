@@ -1,4 +1,5 @@
-import bpy,hashlib
+import bpy 
+import hashlib
 
 idCache = {}
 
@@ -233,20 +234,50 @@ def TreeHasInstanceForObject(tree,obj):
 
     return False
 
-def TreeResetValueForInstanceProperty(tree,obj,param_name,search_expose_name):
+def TreeResetValueForInstanceProperty(tree,obj,param_name,search_expose_name,collection_signature=None):
+    is_linked_tree = tree.library!=None and tree.library!=""
+    is_collection_root = obj.instance_type=="COLLECTION"
+    
+    from JSONProxyNodetree import EnsureProxyDataForCollectionRoot,GetCollectionInstanceDetail
+
+
     for node in tree.nodes:
         try:
             expose_name = eval("node.nodeData.%s_exposename"%param_name)
             if expose_name == search_expose_name:
-                inst_data = TreeEnsureInstanceForNode(node,obj)
+                if not is_linked_tree:
+                    inst_data = TreeEnsureInstanceForNode(node,obj)
+                else:
+                    col_instance_data = EnsureProxyDataForCollectionRoot(obj,False)
+                    if not col_instance_data:
+                        return
+                    inst_data = eval("col_instance_data.%s"%collection_signature)
+
                 if not inst_data:
                     # error. no instance data?
                     return
+                # value of the nodetree
                 value = eval("node.nodeData.%s" % param_name)
+
+                if is_collection_root and collection_signature:
+                    # we need to get the overriden data from the linked-object (PS: I need to finish this, I guess I overcomplicated all things,...I'm a bit lost atm :D *lol* )
+                    obj_name,tree_name,node_name = collection_signature.split("__")
+                    tree = bpy.data.node_groups[tree_name]
+                    node = tree.nodes[node_name]
+                    for node_instance in node.instance_data:
+                        node_instance_objname = node_instance.instance_object.name
+                        if node_instance_objname == obj_name:
+                            modified_by_linked_object = eval("node_instance.%s_expose" % param_name)
+                            if modified_by_linked_object:
+                                value = eval("node_instance.%s" % param_name) 
+                            break
+
+
                 exec("inst_data.%s=value" % param_name)
                 exec("inst_data.%s_expose=False" % param_name)
                 exec("inst_data.%s_exposename=expose_name" % param_name)
                 exec("inst_data.%s_exposename_last=expose_name" % param_name)
+                return
         except:
             pass
 

@@ -3,6 +3,7 @@ import bpy
 import sys, traceback
 from bpy.types import NodeTree, Node, NodeSocket
 import base64, random
+import hashlib
 
 
 from JSONNodetreeCustom import Custom
@@ -337,7 +338,8 @@ def createNodeTree(data):
         class NodeData(bpy.types.PropertyGroup):
             __annotations__={
                 "instance_object" : bpy.props.PointerProperty(type=bpy.types.Object),
-                "instance_tree"   : bpy.props.PointerProperty(type=bpy.types.NodeTree)    
+                "instance_tree"   : bpy.props.PointerProperty(type=bpy.types.NodeTree),
+                "collection_signature" : bpy.props.StringProperty()    
             }
 
         #bpy.utils.register_class(NodeData)
@@ -561,8 +563,7 @@ def createNodeTree(data):
                         if not modified:
                             exposed_name = eval("self.%s_exposename"%name)
                             tree = self.instance_tree
-                            JSONNodetreeUtils.TreeResetValueForInstanceProperty(tree,self.instance_object,name,exposed_name)
-
+                            JSONNodetreeUtils.TreeResetValueForInstanceProperty(tree,self.instance_object,name,exposed_name,self.collection_signature)
                         return
                             
                     tree = context.node.id_data

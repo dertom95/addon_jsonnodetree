@@ -7,7 +7,7 @@ import base64, random
 
 from JSONNodetreeCustom import Custom
 import JSONNodetreeUtils
-from JSONNodetreeUtils import CreateStringHash,NodeHasExposedValues,TreeHasNodeOfType
+from JSONNodetreeUtils import NodeHasExposedValues,TreeHasNodeOfType
 
 #import rxUtils
 #from rx.subjects import Subject
@@ -25,6 +25,68 @@ def GetCollectionInstanceDetail(nodeGroupInstance,linked_obj,tree,node):
         # print("Something went wrong getting proxy node. nodeGroupInstance:%s obj:%s tree:%s node:%s" % (nodeGroupInstance.collection_root_object.name,linked_obj.name,tree.name,node.name))
         return None
 
+def is_in_any_scene(obj):
+    for scene in bpy.data.scenes:
+        if obj.name in scene.objects:
+            return True
+    return False
+
+def refresh_linked_instance(new_inst,get_default_from_nodetree=False):
+    for linked_nodetree in new_inst.linked_nodetree_mapping:
+        nt = eval("new_inst.%s"%linked_nodetree)
+
+        # get the default-values from the nodetree and not the overriden data from the collection-objects
+        for prop in nt.bl_rna.properties:
+            prop_name = prop.name
+            if not prop_name.endswith("_expose"):
+                continue
+
+            modified = eval("nt.%s"%prop_name)
+            if not modified:
+                try:
+                    exec("nt.%s=False" % prop_name)                
+                except:
+                    pass
+
+
+
+def sync_check_proxy(proxy_node,remove_if_root_in_no_scene=True):
+    for idx in range(len(proxy_node.nodeGroupInstances)-1, -1, -1):
+        inst = proxy_node.nodeGroupInstances[idx]
+
+        # remove if the collection_root doesn't exist in any scene
+        if remove_if_root_in_no_scene and not is_in_any_scene(inst.collection_root_object):
+            proxy_node.nodeGroupInstances.remove(idx)
+            continue
+
+        refresh_linked_instance(inst)
+
+        # #iterate over all node-'overrides' and trigger update for those not modified
+        # for key in inst.linked_nodetree_mapping:
+        #     link_nt = inst.linked_nodetree_mapping[key]
+        #     node_name = key.split("__")[2]
+        #     link_node = None
+        #     # get the corresponding node in the linked tree with the 'original' values
+        #     for lnode in link_nt.nodes:
+        #         if lnode.name == node_name:
+        #             link_node = lnode
+        #             break
+
+        #     # todo: apply instace-data of the
+        #     instData = eval("inst.%s"%key)
+        #     for             
+
+
+def refresh_libraries():
+    for lib in bpy.data.libraries:
+        lib.reload()
+    sync_and_check_all_proxys()
+
+def sync_and_check_all_proxys(remove_dangling=True):
+    proxy_nt = bpy.data.node_groups[proxy_nodetree_name]
+    for proxy_node in proxy_nt.nodes:
+        sync_check_proxy(proxy_node,remove_dangling)
+
 
 def EnsureProxyDataForCollectionRoot(collection_root, create=True):
     collection = collection_root.instance_collection
@@ -34,7 +96,14 @@ def EnsureProxyDataForCollectionRoot(collection_root, create=True):
         return None
 
     proxy_nt = bpy.data.node_groups[proxy_nodetree_name]
-    proxy_node = proxy_nt.nodes["collectionnode_%s"%collection.name]
+    col_node_name = "collectionnode_%s"%collection.name
+    
+    proxy_node=None
+    try:
+        proxy_node = proxy_nt.nodes[col_node_name]
+    except:
+        pass
+    
     if not proxy_node:
         print("COULD NOT FIND Proxy-Node for collection:%s (col_root:%s)" %(collection.name,collection_root.name))
         return None
@@ -51,9 +120,21 @@ def EnsureProxyDataForCollectionRoot(collection_root, create=True):
         new_inst = proxy_node.nodeGroupInstances.add()
         new_inst.collection_root_object = collection_root
         new_inst.nodegroup_collection = collection
+
+        for linked_nodetree in new_inst.linked_nodetree_mapping:
+            nt = eval("new_inst.%s"%linked_nodetree)
+            nt.instance_object=collection_root
+            node_tree_name = new_inst.linked_nodetree_mapping[linked_nodetree][1]
+            nt.instance_tree=bpy.data.node_groups[node_tree_name]
+            nt.collection_signature=linked_nodetree
+
+        refresh_linked_instance(new_inst)
+
         return new_inst
     except:
         return None
+
+
 
 def CreateNodeForCollection(col,register=True):
     global collection_node_clazzes
@@ -63,6 +144,9 @@ def CreateNodeForCollection(col,register=True):
             "collection_root_object"  : bpy.props.PointerProperty(type=bpy.types.Object),
             "nodegroup_collection" : bpy.props.PointerProperty(type=bpy.types.Collection)
         }
+        linked_nodetree_mapping = {}
+        
+        
 
     # Derived from the Node base type.
     class CollectionNode(bpy.types.Node):
@@ -109,7 +193,7 @@ def CreateNodeForCollection(col,register=True):
         # Explicit user label overrides this, but here we can define a label dynamically
         def draw_label(self):
             #return "proxy col %s"%col.name
-            pass
+            return "PROXY"
 
 
 
@@ -120,7 +204,7 @@ def CreateNodeForCollection(col,register=True):
         for _treeInfo in obj.nodetrees:
             _tree = _treeInfo.nodetreePointer
 
-            if not _tree.has_exposed_values:
+            if not _tree or not _tree.has_exposed_values:
                 continue
 
             for _node in _tree.nodes:
@@ -128,6 +212,7 @@ def CreateNodeForCollection(col,register=True):
                     key = "%s__%s__%s" % (obj.name,_tree.name,_node.name)
                     CollectionNodeGroupData.__annotations__[key]=bpy.props.PointerProperty(type=type(_node.nodeData))
                     found_exposed_values = True
+                    CollectionNodeGroupData.linked_nodetree_mapping[key]=(obj.name,_tree.name,_node.name)
     
     if register:
         if col in collection_node_clazzes:
@@ -168,5 +253,7 @@ def CreateProxyNodetree():
         node_id = "collectionnode_%s"%col.name
         if collectionNodeClz and not TreeHasNodeOfType(proxy_tree,node_id):
             proxy_tree.nodes.new(node_id)
+
+    sync_and_check_all_proxys()
 
         
