@@ -477,6 +477,7 @@ def createNodeTree(data):
                             row = parent.row()
                             try:
                                 row.prop(self.nodeData,propName+"_cat",text="category")
+                                row = parent.row()
                             except:
                                 pass
                         else:
@@ -485,6 +486,7 @@ def createNodeTree(data):
                         if propType == "enumPreview":
                             #print("Check: %s %s" % (self.name,propName))
                             row.template_icon_view(self.nodeData,propName,show_labels=True)
+                            row = parent.row()
                             row.prop(self.nodeData,propName)
                         else:
                             # standard view
