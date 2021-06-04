@@ -238,7 +238,7 @@ def TreeResetValueForInstanceProperty(tree,obj,param_name,search_expose_name,col
     is_linked_tree = tree.library!=None and tree.library!=""
     is_collection_root = obj.instance_type=="COLLECTION"
     
-    from JSONProxyNodetree import EnsureProxyDataForCollectionRoot,GetCollectionInstanceDetail
+    from JSONProxyNodetree import EnsureProxyDataForCollectionRoot,GetCollectionInstanceDetail,EnsureProxyDataForLinkedNodetree
 
 
     for node in tree.nodes:
@@ -248,10 +248,18 @@ def TreeResetValueForInstanceProperty(tree,obj,param_name,search_expose_name,col
                 if not is_linked_tree:
                     inst_data = TreeEnsureInstanceForNode(node,obj)
                 else:
-                    col_instance_data = EnsureProxyDataForCollectionRoot(obj,False)
-                    if not col_instance_data:
-                        return
-                    inst_data = eval("col_instance_data.%s"%collection_signature)
+                    if is_collection_root:
+                        # collection
+                        col_instance_data = EnsureProxyDataForCollectionRoot(obj,False)
+                        if not col_instance_data:
+                            return
+                        inst_data = eval("col_instance_data.%s"%collection_signature)
+                    else:
+                        #linked nodetree
+                        nt_instance_data = EnsureProxyDataForLinkedNodetree(obj,tree,False)
+                        if not nt_instance_data:
+                            return
+                        inst_data = eval("nt_instance_data.%s"%collection_signature)
 
                 if not inst_data:
                     # error. no instance data?
@@ -271,6 +279,15 @@ def TreeResetValueForInstanceProperty(tree,obj,param_name,search_expose_name,col
                             if modified_by_linked_object:
                                 value = eval("node_instance.%s" % param_name) 
                             break
+                elif is_linked_tree:
+                    # linked tree. we only need to get the value from the tree directly
+                    obj_name,tree_name,node_name = collection_signature.split("__")
+                    tree = bpy.data.node_groups[tree_name]
+                    node = tree.nodes[node_name]
+                    value = eval("node.nodeData.%s" % param_name) 
+   
+
+
 
 
                 exec("inst_data.%s=value" % param_name)

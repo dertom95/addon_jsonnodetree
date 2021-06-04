@@ -10,7 +10,7 @@ from JSONNodetreeCustom import Custom
 import JSONNodetreeUtils
 from JSONNodetreeUtils import CreateStringHash,NodeHasExposedValues
 import JSONProxyNodetree
-from JSONProxyNodetree import GetCollectionInstanceDetail, EnsureProxyDataForCollectionRoot, CreateProxyNodetree, refresh_libraries
+from JSONProxyNodetree import GetCollectionInstanceDetail, EnsureProxyDataForCollectionRoot, CreateProxyNodetree, refresh_libraries, EnsureProxyDataForLinkedNodetree
 
 #import rxUtils
 #from rx.subjects import Subject
@@ -52,6 +52,8 @@ def feedback(output,type=""):
 
 def propValue(treeOwner,node,propName,collection_root):
     is_exposed_prop = eval("node.nodeData.%s_expose" % propName)
+    tree = node.id_data
+    is_linked_tree = tree.library!=None and tree.library!=""
 
     if is_exposed_prop and treeOwner:
 #        instance_data = JSONNodetreeUtils.TreeEnsureInstanceForNode(node,treeOwner,False)
@@ -59,7 +61,10 @@ def propValue(treeOwner,node,propName,collection_root):
             col_instance_data = EnsureProxyDataForCollectionRoot(collection_root,False)
             linked_obj = treeOwner # just to point out, that obj is the object being linked from within the collection
             tree=node.id_data
-            instance_data = GetCollectionInstanceDetail(col_instance_data,linked_obj,tree,node)
+            instance_data = GetCollectionInstanceDetail(col_instance_data,linked_obj.name,tree.name,node.name)
+        elif is_linked_tree:
+            nt_instance_data = EnsureProxyDataForLinkedNodetree(treeOwner,tree,False)
+            instance_data = GetCollectionInstanceDetail(nt_instance_data,"linkedNT",tree.name,node.name)
         else:
             instance_data = JSONNodetreeUtils.TreeEnsureInstanceForNode(node,treeOwner)
 

@@ -17,7 +17,7 @@ proxy_nodetree_name = "__proxy_linked_exposeddata__"
 collection_node_clazzes = {}
 
 def GetCollectionInstanceDetail(nodeGroupInstance,linked_obj,tree,node):
-    key = "%s__%s__%s" % ( linked_obj.name,tree.name,node.name)
+    key = "%s__%s__%s" % ( linked_obj,tree,node)
     try:
         result = eval("nodeGroupInstance.%s" % key)
         return result
@@ -55,9 +55,19 @@ def sync_check_proxy(proxy_node,remove_if_root_in_no_scene=True):
         inst = proxy_node.nodeGroupInstances[idx]
 
         # remove if the collection_root doesn't exist in any scene
-        if remove_if_root_in_no_scene and not is_in_any_scene(inst.collection_root_object):
-            proxy_node.nodeGroupInstances.remove(idx)
-            continue
+        if remove_if_root_in_no_scene:
+            try:
+                if not is_in_any_scene(inst.collection_root_object):
+                    proxy_node.nodeGroupInstances.remove(idx)
+                    continue
+            except:
+                try:
+                    if not is_in_any_scene(inst.root_object):
+                        proxy_node.nodeGroupInstances.remove(idx)
+                        continue
+                except:
+                    print("sync_check_proxy error:", sys.exc_info()[0])
+
 
         refresh_linked_instance(inst)
 
@@ -86,6 +96,50 @@ def sync_and_check_all_proxys(remove_dangling=True):
     proxy_nt = bpy.data.node_groups[proxy_nodetree_name]
     for proxy_node in proxy_nt.nodes:
         sync_check_proxy(proxy_node,remove_dangling)
+
+
+def EnsureProxyDataForLinkedNodetree(obj,nodetree, create=True):
+    if not nodetree.library:
+        print("only create proxy for linked-nodetrees: %s" % nodetree.name)
+        return None
+
+    proxy_nt = bpy.data.node_groups[proxy_nodetree_name]
+    col_node_name = "proxynode_%s"%nodetree.name
+    
+    proxy_node=None
+    try:
+        proxy_node = proxy_nt.nodes[col_node_name]
+    except:
+        pass
+    
+    if not proxy_node:
+        print("COULD NOT FIND LTree-Proxy-Node for tree:%s (obj:%s)" %(nodetree.name,obj.name))
+        return None
+
+    try:
+        for instance in proxy_node.nodeGroupInstances:
+            if instance.root_object == obj:
+                return instance
+            
+        if not create:
+            return None
+        
+        # create an instance
+        new_inst = proxy_node.nodeGroupInstances.add()
+        new_inst.linked_nodetree = nodetree
+        new_inst.root_object = obj
+
+        for linked_nodetree in new_inst.linked_nodetree_mapping:
+            nt = eval("new_inst.%s"%linked_nodetree)
+            nt.instance_object=obj
+            nt.instance_tree=nodetree
+            nt.collection_signature=linked_nodetree
+
+        refresh_linked_instance(new_inst)
+
+        return new_inst
+    except:
+        return None
 
 
 def EnsureProxyDataForCollectionRoot(collection_root, create=True):
@@ -237,6 +291,108 @@ def CreateNodeForCollection(col,register=True):
     else:
         return None
 
+def CreateNodeForLinkedNodetree(lnodetree,register=True):
+    global collection_node_clazzes
+
+    if not lnodetree or not lnodetree.has_exposed_values:
+        return
+
+
+    class LinkedNodetreeGroupData(bpy.types.PropertyGroup):
+        __annotations__ = {
+            "linked_nodetree"  : bpy.props.PointerProperty(type=bpy.types.NodeTree),
+            "root_object" : bpy.props.PointerProperty(type=bpy.types.Object)
+        }
+        linked_nodetree_mapping = {}
+        
+        
+
+    # Derived from the Node base type.
+    class LinkedNodetreeNode(bpy.types.Node):
+        nonlocal lnodetree,LinkedNodetreeGroupData
+        # === Basics ===
+        # Description string
+        '''Proxy Node %s''' % lnodetree.name
+        # Optional identifier string. If not explicitly defined, the python class name is used.
+        bl_idname = 'proxynode_%s' % lnodetree.name
+        # Label for nice name display
+        bl_label = "proxynode_%s" % lnodetree.name
+        # Icon identifier
+        bl_icon = 'SOUND'
+
+        linked_nodetree : bpy.props.PointerProperty(type=bpy.types.NodeTree)
+        nodeGroupInstances : bpy.props.CollectionProperty(type=LinkedNodetreeGroupData)
+
+        @classmethod
+        def poll(cls, ntree):
+            return True
+
+        def init(self, context):
+            #print("Created CollectionNode:%s"%col.name)
+            pass
+
+        # Copy function to initialize a copied node from an existing one.
+        def copy(self, node):
+            print("Copying from node ", node)
+
+        # Free function to clean up on removal.
+        def free(self):
+            print("Removing node ", self, ", Goodbye!")
+
+        # Additional buttons displayed on the node.
+        def draw_buttons(self, context, layout):
+            layout.label(text=self.bl_idname)
+
+        # Detail buttons in the sidebar.
+        # If this function is not defined, the draw_buttons function is used instead
+        def draw_buttons_ext(self, context, layout):
+            layout.label(text=self.bl_idname)
+        
+        # Optional: custom label
+        # Explicit user label overrides this, but here we can define a label dynamically
+        def draw_label(self):
+            #return "proxy col %s"%col.name
+            return "PROXY"
+
+
+
+    print ("Process LNodetree-Proxy:%s"%lnodetree.name)
+    found_exposed_values = False
+
+    _tree = lnodetree
+
+
+    for _node in _tree.nodes:
+        if NodeHasExposedValues(_node):
+            key = "linkedNT__%s__%s" % (_tree.name,_node.name)
+            LinkedNodetreeGroupData.__annotations__[key]=bpy.props.PointerProperty(type=type(_node.nodeData))
+            found_exposed_values = True
+            LinkedNodetreeGroupData.linked_nodetree_mapping[key]=(None,_tree.name,_node.name)
+    
+    if register:
+        if lnodetree in collection_node_clazzes:
+            for elem in reversed(collection_node_clazzes[lnodetree]):
+                try:
+                    bpy.utils.unregister_class(elem)
+                except:
+                    pass
+
+            #collection_node_clazzes.pop(col,None)
+        
+        if found_exposed_values:
+            collection_node_clazzes[lnodetree]=[LinkedNodetreeGroupData,LinkedNodetreeNode]
+            for elem in collection_node_clazzes[lnodetree]:
+                try:
+                    bpy.utils.register_class(elem)
+                except:
+                    pass
+    
+    if found_exposed_values:
+        return LinkedNodetreeGroupData
+    else:
+        return None
+
+
 def CreateProxyNodetree():
    
     if proxy_nodetree_name not in bpy.data.node_groups:
@@ -253,6 +409,13 @@ def CreateProxyNodetree():
         node_id = "collectionnode_%s"%col.name
         if collectionNodeClz and not TreeHasNodeOfType(proxy_tree,node_id):
             proxy_tree.nodes.new(node_id)
+
+    for nt in bpy.data.node_groups:
+        if nt.library:
+            lntNode = CreateNodeForLinkedNodetree(nt)
+            node_id = "proxynode_%s" % nt.name
+            if lntNode and not TreeHasNodeOfType(proxy_tree,node_id):
+                proxy_tree.nodes.new(node_id)
 
     sync_and_check_all_proxys()
 
