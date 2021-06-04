@@ -64,7 +64,11 @@ def propValue(treeOwner,node,propName,collection_root):
             instance_data = GetCollectionInstanceDetail(col_instance_data,linked_obj.name,tree.name,node.name)
         elif is_linked_tree:
             nt_instance_data = EnsureProxyDataForLinkedNodetree(treeOwner,tree,False)
-            instance_data = GetCollectionInstanceDetail(nt_instance_data,"linkedNT",tree.name,node.name)
+            if nt_instance_data:
+                instance_data = GetCollectionInstanceDetail(nt_instance_data,"linkedNT",tree.name,node.name)
+            else:
+                # linked nodetree but no override data
+                instance_data = node.nodeData
         else:
             instance_data = JSONNodetreeUtils.TreeEnsureInstanceForNode(node,treeOwner)
 
