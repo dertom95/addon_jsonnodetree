@@ -17,7 +17,7 @@ from JSONProxyNodetree import GetCollectionInstanceDetail, EnsureProxyDataForCol
       
 
 class DefaultCollection(bpy.types.PropertyGroup):
-    name : bpy.props.StringProperty(default="")
+    name : bpy.props.StringProperty(default="",override={'LIBRARY_OVERRIDABLE'})
 
 #classes = [DefaultCollection]
 classes = []
@@ -222,7 +222,7 @@ class MyCustomSocket(NodeSocket):
         ('RIGHT', "Right", "Not left")
     )
 
-    my_enum_prop : bpy.props.EnumProperty(name="Direction", description="Just an example", items=my_items, default='UP')
+    my_enum_prop : bpy.props.EnumProperty(name="Direction", description="Just an example", items=my_items, default='UP',override={'LIBRARY_OVERRIDABLE'})
 
     # Optional function for drawing the socket input value
     def draw(self, context, layout, node, text):
@@ -281,8 +281,8 @@ def createNodeTree(data):
         # Icon identifier
         bl_icon = data.get("icon",'NODETREE')
 
-        has_exposed_values : bpy.props.BoolProperty(default=False)
-        instances : bpy.props.CollectionProperty(type=NodeTreeInstance)
+        has_exposed_values : bpy.props.BoolProperty(default=False,override={'LIBRARY_OVERRIDABLE'})
+        instances : bpy.props.CollectionProperty(type=NodeTreeInstance,override={'LIBRARY_OVERRIDABLE'})
 
         
         @classmethod
@@ -325,7 +325,7 @@ def createNodeTree(data):
     # Mix-in class for all custom nodes in this tree type.
     # Defines a poll function to enable instantiation.
     class MyCustomTreeNode:
-        exposeData : bpy.props.BoolProperty()
+        exposeData : bpy.props.BoolProperty(override={'LIBRARY_OVERRIDABLE'})
         #expose_parent :bpy.props.PointerProperty(type=bpy.types.Object)
 
         @classmethod
@@ -354,9 +354,9 @@ def createNodeTree(data):
 
         class NodeData(bpy.types.PropertyGroup):
             __annotations__={
-                "instance_object" : bpy.props.PointerProperty(type=bpy.types.Object),
-                "instance_tree"   : bpy.props.PointerProperty(type=bpy.types.NodeTree),
-                "collection_signature" : bpy.props.StringProperty()    
+                "instance_object" : bpy.props.PointerProperty(type=bpy.types.Object,override={'LIBRARY_OVERRIDABLE'}),
+                "instance_tree"   : bpy.props.PointerProperty(type=bpy.types.NodeTree,override={'LIBRARY_OVERRIDABLE'}),
+                "collection_signature" : bpy.props.StringProperty(override={'LIBRARY_OVERRIDABLE'})    
             }
 
         #bpy.utils.register_class(NodeData)
@@ -388,8 +388,8 @@ def createNodeTree(data):
 
             __annotations__={}
 
-            nodeData : bpy.props.PointerProperty(type=NodeData)             # the default property view
-            instance_data : bpy.props.CollectionProperty(type=NodeData)     # values of objects using the nodetree but overriding values
+            nodeData : bpy.props.PointerProperty(type=NodeData,override={'LIBRARY_OVERRIDABLE'})             # the default property view
+            instance_data : bpy.props.CollectionProperty(type=NodeData,override={'LIBRARY_OVERRIDABLE'})     # values of objects using the nodetree but overriding values
 
             
             # === Optional Functions ===
@@ -760,16 +760,16 @@ def createNodeTree(data):
                 precision = prop.get("precision",3)
                 unit = prop.get("unit","NONE")
                 default = prop.get("default",0.0)
-                exec("NodeData.__annotations__['%s']=bpy.props.FloatProperty(subtype='%s',name='%s',default=%s,description='%s',min=%s,max=%s,step=%s,unit='%s',precision=%s,update=updated_node_value)" % ( name,subtype,label,default,description,mini,maxi,step,unit,precision ))
+                exec("NodeData.__annotations__['%s']=bpy.props.FloatProperty(subtype='%s',name='%s',default=%s,description='%s',min=%s,max=%s,step=%s,unit='%s',precision=%s,update=updated_node_value,override={'LIBRARY_OVERRIDABLE'})" % ( name,subtype,label,default,description,mini,maxi,step,unit,precision ))
                 print("NodeData.%s=bpy.props.FloatProperty(subtype='%s',name='%s',default=%s,description='%s',min=%s,max=%s,step=%s,unit='%s',precision=%s)" % ( name,subtype,label,default,description,mini,maxi,step,unit,precision ))
                 #exec("NodeData.%s=bpy.props.FloatProperty(subtype='%s',name='%s',default=%s,description='%s',min=%s,max=%s,step=%s,unit='%s',precision=%s)" % ( name,subtype,label,default,description,mini,maxi,step,unit,precision ))
             elif type=="string":
                 default = prop.get("default","")
-                exec("NodeData.__annotations__['%s']=bpy.props.StringProperty(name='%s',default='%s',description='%s',update=updated_node_value)" % ( name,label,default,description ))
+                exec("NodeData.__annotations__['%s']=bpy.props.StringProperty(name='%s',default='%s',description='%s',update=updated_node_value,override={'LIBRARY_OVERRIDABLE'})" % ( name,label,default,description ))
                 # exec("NodeData.%s=bpy.props.StringProperty(name='%s',default='%s',description='%s')" % ( name,label,default,description ))
             elif type=="bool":
                 default = prop.get("default","False")=="true"
-                exec("NodeData.__annotations__['%s']=bpy.props.BoolProperty(name='%s',default=%s,description='%s',update=updated_node_value)" % ( name,label,default,description ))
+                exec("NodeData.__annotations__['%s']=bpy.props.BoolProperty(name='%s',default=%s,description='%s',update=updated_node_value,override={'LIBRARY_OVERRIDABLE'})" % ( name,label,default,description ))
                 # exec("NodeData.%s=bpy.props.BoolProperty(name='%s',default=%s,description='%s')" % ( name,label,default,description ))
             elif type=="int":
                 mini = prop.get("min",-65535)
@@ -781,28 +781,28 @@ def createNodeTree(data):
                     default = int(prop.get("default",0))
                 except:
                     default = 0
-                exeStr = "NodeData.__annotations__['%s']=bpy.props.IntProperty(subtype='%s',name='%s',default=%s,description='%s',min=%s,max=%s,step=%s,update=updated_node_value)" % ( name,subtype,label,default,description,mini,maxi,step )
+                exeStr = "NodeData.__annotations__['%s']=bpy.props.IntProperty(subtype='%s',name='%s',default=%s,description='%s',min=%s,max=%s,step=%s,update=updated_node_value,override={'LIBRARY_OVERRIDABLE'})" % ( name,subtype,label,default,description,mini,maxi,step )
                 # exeStr = "NodeData.%s=bpy.props.IntProperty(subtype='%s',name='%s',default=%s,description='%s',min=%s,max=%s,step=%s)" % ( name,subtype,label,default,description,mini,maxi,step )
                 exec(exeStr)
             elif type=="vector2":
                 default = prop.get("default",(0.0,0.0));
-                exec("NodeData.__annotations__['%s']=bpy.props.FloatVectorProperty(name='%s',default=%s,size=2,description='%s',update=updated_node_value)" % ( name,label,default,description ))
+                exec("NodeData.__annotations__['%s']=bpy.props.FloatVectorProperty(name='%s',default=%s,size=2,description='%s',update=updated_node_value,override={'LIBRARY_OVERRIDABLE'})" % ( name,label,default,description ))
                 # exec("NodeData.%s=bpy.props.FloatVectorProperty(name='%s',default=%s,size=2,description='%s')" % ( name,label,default,description ))
             elif type=="vector3":
                 default = prop.get("default",None) or (0.0,0.0,0.0)
-                exec("NodeData.__annotations__['%s']=bpy.props.FloatVectorProperty(name='%s',default=%s,size=3,description='%s',update=updated_node_value)" % ( name,label,default,description ))
+                exec("NodeData.__annotations__['%s']=bpy.props.FloatVectorProperty(name='%s',default=%s,size=3,description='%s',update=updated_node_value,override={'LIBRARY_OVERRIDABLE'})" % ( name,label,default,description ))
                 # exec("NodeData.%s=bpy.props.FloatVectorProperty(name='%s',default=%s,size=3,description='%s')" % ( name,label,default,description ))
             elif type=="vector4":
                 default = eval(prop.get("default",(0.0,0.0,0.0,0.0)));
-                exec("NodeData.__annotations__['%s']=bpy.props.FloatVectorProperty(name='%s',default=%s,size=4,description='%s',update=updated_node_value)" % ( name,label,default,description ))
+                exec("NodeData.__annotations__['%s']=bpy.props.FloatVectorProperty(name='%s',default=%s,size=4,description='%s',update=updated_node_value,override={'LIBRARY_OVERRIDABLE'})" % ( name,label,default,description ))
                 # exec("NodeData.%s=bpy.props.FloatVectorProperty(name='%s',default=%s,size=4,description='%s')" % ( name,label,default,description ))
             elif type=="color":
                 default = eval(prop.get("default",(1.0,1.0,1.0,1.0)));
-                exec("NodeData.__annotations__['%s']=bpy.props.FloatVectorProperty(name='%s',default=%s,size=4,subtype='COLOR',description='%s',min=0.0,max=1.0,update=updated_node_value )" % ( name,label,default,description))
+                exec("NodeData.__annotations__['%s']=bpy.props.FloatVectorProperty(name='%s',default=%s,size=4,subtype='COLOR',description='%s',min=0.0,max=1.0,update=updated_node_value,override={'LIBRARY_OVERRIDABLE'} )" % ( name,label,default,description))
                 # exec("NodeData.%s=bpy.props.FloatVectorProperty(name='%s',default=%s,size=4,subtype='COLOR',description='%s',min=0.0,max=1.0 )" % ( name,label,default,description))
             elif type=="collection":
                 default = prop.get("default",0.0);
-                exec("NodeData.__annotations__['%s']=bpy.props.CollectionProperty(type=DefaultCollection,description='%s',update=updated_node_value)" % ( name ))
+                exec("NodeData.__annotations__['%s']=bpy.props.CollectionProperty(type=DefaultCollection,description='%s',update=updated_node_value,override={'LIBRARY_OVERRIDABLE'})" % ( name ))
                 # exec("NodeData.%s=bpy.props.CollectionProperty(type=DefaultCollection,description='%s')" % ( name ))
  #           elif type=="texture":
  #               exec("NodeData.__annotations__['%s']=bpy.props.EnumProperty(items=get_icons,update=JSONNodetreeUtils.modalStarter)" % name)
@@ -970,24 +970,24 @@ def createNodeTree(data):
 
                 if len(categories)>1:
                     #print("CREATE InnerCustomNode.__annotations__['%s']=bpy.props.EnumProperty(name='%s'.." % (name,label))
-                    exec("NodeData.__annotations__['%s']=bpy.props.EnumProperty(name='%s',items=dynamicElements,update=updated_node_value)" % (name,label))
-                    exec("NodeData.__annotations__['%s_cat']=bpy.props.EnumProperty(name='%s_cat',items=catElems)" % (name,label))
+                    exec("NodeData.__annotations__['%s']=bpy.props.EnumProperty(name='%s',items=dynamicElements,update=updated_node_value,override={'LIBRARY_OVERRIDABLE'})" % (name,label))
+                    exec("NodeData.__annotations__['%s_cat']=bpy.props.EnumProperty(name='%s_cat',items=catElems,override={'LIBRARY_OVERRIDABLE'})" % (name,label))
                     # exec("NodeData.%s=bpy.props.EnumProperty(name='%s',items=dynamicElements)" % (name,label))
                     # exec("NodeData.%s_cat=bpy.props.EnumProperty(name='%s_cat',items=catElems)" % (name,label))
                 else:
                     #print("2:CREATE InnerCustomNode.__annotations__['%s']=bpy.props.EnumProperty(name='%s'.." % (name,label))
                     try:
-                        exec("NodeData.__annotations__['%s']=bpy.props.EnumProperty(name='%s',items=elements,default='%s',update=updated_node_value)" % (name,label,defaultID))
+                        exec("NodeData.__annotations__['%s']=bpy.props.EnumProperty(name='%s',items=elements,default='%s',update=updated_node_value,override={'LIBRARY_OVERRIDABLE'})" % (name,label,defaultID))
 #                        exec("NodeData.%s=bpy.props.EnumProperty(name='%s',items=elements,default='%s')" % (name,label,defaultID))
                     except:
                         traceback.print_exc(file=sys.stdout)                  
             else:
                 raise Exception("Unknown property-type:"+type)
 
-            exec("NodeData.__annotations__['%s_expose']=bpy.props.BoolProperty(description='expose %s',update=check_for_exposed_data)" % (name,label))
-            exec("NodeData.__annotations__['%s_exposename']=bpy.props.StringProperty(default='%s',description='expose %s under this name',update=update_exposename)" % (name,label,label))
+            exec("NodeData.__annotations__['%s_expose']=bpy.props.BoolProperty(description='expose %s',update=check_for_exposed_data,override={'LIBRARY_OVERRIDABLE'})" % (name,label))
+            exec("NodeData.__annotations__['%s_exposename']=bpy.props.StringProperty(default='%s',description='expose %s under this name',update=update_exposename,override={'LIBRARY_OVERRIDABLE'})" % (name,label,label))
             # super-hacky but for some reason I cannot use setter-function with this dynamic-approach.... self[key] is not found....
-            exec("NodeData.__annotations__['%s_exposename_last']=bpy.props.StringProperty(default='%s')" % (name,label))
+            exec("NodeData.__annotations__['%s_exposename_last']=bpy.props.StringProperty(default='%s',override={'LIBRARY_OVERRIDABLE'})" % (name,label))
            # exec("NodeData.__annotations__['%s_exposename']=bpy.props.StringProperty(default='%s',description='expose %s under this name')" % (name,label,label))
             # exec("NodeData.%s_expose=bpy.props.BoolProperty(description='expose %s',update=check_for_exposed_data)" % (name,label))
             # exec("NodeData.%s_exposename=bpy.props.StringProperty(default='%s',description='expose %s under this name')" % (name,label,label))
