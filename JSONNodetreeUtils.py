@@ -182,6 +182,8 @@ def TreeEnsureInstanceForNode(node,obj,create=True):
         data.instance_tree = node.id_data
         for prop_name in node.propNames:
             exec("data.%s_expose=False" % prop_name)
+            exposename = eval("node.nodeData.%s_exposename" % prop_name)
+            exec("data.%s_exposename=exposename" % prop_name)
 
     return data
 
@@ -301,7 +303,7 @@ def TreeResetValueForInstanceProperty(tree,obj,param_name,search_expose_name,col
 def TreeUpdateExposedNames(tree,update_prop_name=""):
     update_all = update_prop_name==""
     for node in tree.nodes:
-        if not node.exposeData:
+        if not NodeHasExposedValues(node):
             continue
 
         for prop_name in node.propNames:
