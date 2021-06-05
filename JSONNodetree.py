@@ -465,6 +465,7 @@ def createNodeTree(data):
 
 
                         is_exposed = eval("self.nodeData.%s_expose" % propName)
+
                         if is_exposed:
                             parent = parent.box()
                             row = parent.row()
@@ -487,10 +488,19 @@ def createNodeTree(data):
                             #print("Check: %s %s" % (self.name,propName))
                             row.template_icon_view(self.nodeData,propName,show_labels=True)
                             row = parent.row()
-                            row.prop(self.nodeData,propName)
+
+                            if is_exposed:
+                                exposename = eval("self.nodeData.%s_exposename" % propName)
+                                row.prop(self.nodeData,propName,text=exposename)
+                            else:
+                                row.prop(self.nodeData,propName)                                                                
                         else:
                             # standard view
-                            row.prop(self.nodeData,propName)
+                            if is_exposed:
+                                exposename = eval("self.nodeData.%s_exposename" % propName)
+                                row.prop(self.nodeData,propName,text=exposename)
+                            else:
+                                row.prop(self.nodeData,propName)                                                                
                         
                         if self.exposeData:
                             box = row.box()
