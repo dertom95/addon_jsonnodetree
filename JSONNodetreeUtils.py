@@ -168,6 +168,43 @@ def TreeHasNodeOfType(tree,idname):
             return True
     return False
 
+def DeselectAll():
+    bpy.context.active_object.select_set(False)
+    for obj in bpy.context.selected_objects:
+        bpy.context.view_layer.objects.active = obj    
+
+def SelectObject(obj):
+    DeselectAll()
+    obj.select_set(True)
+
+
+def DuplicateObject(orig_obj):
+    SelectObject(orig_obj)
+    bpy.ops.object.duplicate_move(
+        OBJECT_OT_duplicate={"linked":False, "mode":'TRANSLATION'}, 
+        TRANSFORM_OT_translate={"value":(0, 0, 0), "orient_type":'GLOBAL', "orient_matrix":((1, 0, 0), (0, 1, 0), (0, 0, 1)), 
+        "orient_matrix_type":'GLOBAL', 
+        "constraint_axis":(True, False, False), 
+        "mirror":True, "use_proportional_edit":False, 
+        "proportional_edit_falloff":'SMOOTH', 
+        "proportional_size":1, "use_proportional_connected":False, 
+        "use_proportional_projected":False, 
+        "snap":False, "snap_target":'CLOSEST', 
+        "snap_point":(0, 0, 0), 
+        "snap_align":False, 
+        "snap_normal":(0, 0, 0), 
+        "gpencil_strokes":False, 
+        "cursor_transform":False, 
+        "texture_space":False, 
+        "remove_on_cancel":False, 
+        "release_confirm":False, 
+        "use_accurate":False, 
+        "use_automerge_and_split":False})
+
+    new_obj = bpy.context.active_object
+    
+
+
 def TreeEnsureInstanceForNode(node,obj,create=True):
     # iterate over instance data and check if there is an instance for this obj already
     data = None

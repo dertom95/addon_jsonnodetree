@@ -33,8 +33,16 @@ from JSONNodetreeUtils import NodeTreeInstance
 
 preview_collections = {}
 
-
-
+def FindSameTreeType(jsonData,treeid):
+    if not jsonData:
+        return None
+    try:
+        for tree in jsonData["trees"]:
+            if tree["id"] == treeid:
+                return tree
+    except:
+        print("Something went wrong find tree with type:%s" %treeid)
+    return None
 
 def processNodetreeFromFile():
     if "main" in preview_collections:
@@ -53,9 +61,22 @@ def processNodetreeFromFile():
         if jsonData:
             print("merge json-data")
             for nodetree in jsonData2["trees"]:
-                # TODO merge trees of same type?
-                jsonData["trees"].append(nodetree)
-            
+                tree = FindSameTreeType(jsonData,nodetree["id"])
+                if not tree:
+                    # new treetype, just append to treelist
+                    jsonData["trees"].append(nodetree)
+                else:
+                    existing_nodeids = {}
+                    for node in tree["nodes"]:
+                        existing_nodeids[node["id"]]=node
+                    # merge
+                    for node in nodetree["nodes"]:
+                        if node["id"] in existing_nodeids:
+                            #remove current
+                            tree["nodes"].remove(existing_nodeids[node["id"]])    
+                        
+                        tree["nodes"].append(node)
+
             
             
             # for nodetree in jsonData2["trees"]:
