@@ -580,7 +580,7 @@ def createNodeTree(data):
             def check_for_exposed_data(self,context):
                 nonlocal name, in_process
 
-                if self in in_process:
+                if self in in_process or not context.node:
                     return
 
                 in_process[self]=True

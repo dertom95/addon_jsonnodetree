@@ -33,20 +33,26 @@ def is_in_any_scene(obj):
 
 def refresh_linked_instance(new_inst,get_default_from_nodetree=False):
     for linked_nodetree in new_inst.linked_nodetree_mapping:
-        nt = eval("new_inst.%s"%linked_nodetree)
+        try:
+            nt = eval("new_inst.%s"%linked_nodetree)
 
-        # get the default-values from the nodetree and not the overriden data from the collection-objects
-        for prop in nt.bl_rna.properties:
-            prop_name = prop.name
-            if not prop_name.endswith("_expose"):
-                continue
+            # get the default-values from the nodetree and not the overriden data from the collection-objects
+            for prop in nt.bl_rna.properties:
+                prop_name = prop.name
 
-            modified = eval("nt.%s"%prop_name)
-            if not modified:
-                try:
-                    exec("nt.%s=False" % prop_name)                
-                except:
-                    pass
+
+                if not prop_name.endswith("_expose"):
+                    continue
+
+                modified = eval("nt.%s"%prop_name)
+                if not modified:
+                    try:
+                        exec("nt.%s=False" % prop_name)                
+                    except:
+                        pass
+
+        except:
+            print("Could not read new_inst.%s"%linked_nodetree)
 
 
 
@@ -135,6 +141,18 @@ def EnsureProxyDataForLinkedNodetree(obj,nodetree, create=True):
             nt.instance_tree=nodetree
             nt.collection_signature=linked_nodetree
 
+            linked_obj_name,nodetree_name,node_name=linked_nodetree.split("__")
+            linked_obj = bpy.data.objects[linked_obj_name]
+            for l_ntp in linked_obj.nodetrees:
+                if not l_ntp.nodetreePointer:
+                    continue
+                l_nt=l_ntp.nodetreePointer
+                if l_nt.name!=nodetree_name:
+                    continue
+                node=l_nt.nodes[node_name]
+                for prop_name in node.propNames:
+                    exec("nt.%_exposename=%node.nodeData.%s_exposename" % (prop_name,prop_name))
+
         refresh_linked_instance(new_inst)
 
         return new_inst
@@ -181,6 +199,18 @@ def EnsureProxyDataForCollectionRoot(collection_root, create=True):
             node_tree_name = new_inst.linked_nodetree_mapping[linked_nodetree][1]
             nt.instance_tree=bpy.data.node_groups[node_tree_name]
             nt.collection_signature=linked_nodetree
+
+            linked_obj_name,nodetree_name,node_name=linked_nodetree.split("__")
+            linked_obj = bpy.data.objects[linked_obj_name]
+            for l_ntp in linked_obj.nodetrees:
+                if not l_ntp.nodetreePointer:
+                    continue
+                l_nt=l_ntp.nodetreePointer
+                if l_nt.name!=nodetree_name:
+                    continue
+                node=l_nt.nodes[node_name]
+                for prop_name in node.propNames:
+                    exec("nt.%s_exposename=node.nodeData.%s_exposename" % (prop_name,prop_name))            
 
         refresh_linked_instance(new_inst)
 
