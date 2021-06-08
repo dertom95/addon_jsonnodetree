@@ -580,7 +580,7 @@ def createNodeTree(data):
             def check_for_exposed_data(self,context):
                 nonlocal name, in_process
 
-                if self in in_process or not context.node:
+                if self in in_process:
                     return
 
                 in_process[self]=True
@@ -594,8 +594,10 @@ def createNodeTree(data):
                             tree = self.instance_tree
                             JSONNodetreeUtils.TreeResetValueForInstanceProperty(tree,self.instance_object,name,exposed_name,self.collection_signature)
                         return
-                            
-                    tree = context.node.id_data
+                    tree = self.instance_tree
+                    # if not hasattr(context,"node"):
+                    #     return
+                    # tree = context.node.id_data
                     JSONNodetreeUtils.TreeCheckForExposedValues(tree)
                 finally:
                     in_process.pop(self,None)
