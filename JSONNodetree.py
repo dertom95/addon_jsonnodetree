@@ -595,9 +595,9 @@ def createNodeTree(data):
                             JSONNodetreeUtils.TreeResetValueForInstanceProperty(tree,self.instance_object,name,exposed_name,self.collection_signature)
                         return
                     tree = self.instance_tree
-                    # if not hasattr(context,"node"):
-                    #     return
-                    # tree = context.node.id_data
+                    if hasattr(context,"node"):
+                        tree = context.node.id_data
+                        
                     JSONNodetreeUtils.TreeCheckForExposedValues(tree)
                 finally:
                     in_process.pop(self,None)
