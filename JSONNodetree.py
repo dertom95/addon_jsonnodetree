@@ -62,7 +62,8 @@ def propValue(treeOwner,node,propName,collection_root):
             linked_obj = treeOwner # just to point out, that obj is the object being linked from within the collection
             tree=node.id_data
             instance_data = GetCollectionInstanceDetail(col_instance_data,linked_obj.name,tree.name,node.name)
-        elif is_linked_tree:
+        
+        if not instance_data and is_linked_tree:
             nt_instance_data = EnsureProxyDataForLinkedNodetree(treeOwner,tree,False)
             if nt_instance_data:
                 instance_data = GetCollectionInstanceDetail(nt_instance_data,"linkedNT",tree.name,node.name)
