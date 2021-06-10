@@ -717,7 +717,7 @@ def createNodeTree(data):
                 if is_instance:
                     # user is changing the value of an exposed value on the instance
                     exec("self.%s_expose=True" % name) # set PROP_expose=True to indicate the value is changed by the user and should not be overriden on changes in the NodeTree
-                    self.instance_object.inline_collection_instance=True
+                    #self.instance_object.inline_collection_instance=True
                     return
 
 
