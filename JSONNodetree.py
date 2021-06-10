@@ -57,21 +57,23 @@ def propValue(treeOwner,node,propName,collection_root):
 
     if is_exposed_prop and treeOwner:
 #        instance_data = JSONNodetreeUtils.TreeEnsureInstanceForNode(node,treeOwner,False)
+        instance_data = None
         if collection_root:
             col_instance_data = EnsureProxyDataForCollectionRoot(collection_root,False)
             linked_obj = treeOwner # just to point out, that obj is the object being linked from within the collection
             tree=node.id_data
             instance_data = GetCollectionInstanceDetail(col_instance_data,linked_obj.name,tree.name,node.name)
         
-        if not instance_data and is_linked_tree:
-            nt_instance_data = EnsureProxyDataForLinkedNodetree(treeOwner,tree,False)
-            if nt_instance_data:
-                instance_data = GetCollectionInstanceDetail(nt_instance_data,"linkedNT",tree.name,node.name)
+        if not instance_data:
+            if is_linked_tree:
+                nt_instance_data = EnsureProxyDataForLinkedNodetree(treeOwner,tree,False)
+                if nt_instance_data:
+                    instance_data = GetCollectionInstanceDetail(nt_instance_data,"linkedNT",tree.name,node.name)
+                else:
+                    # linked nodetree but no override data
+                    instance_data = node.nodeData
             else:
-                # linked nodetree but no override data
-                instance_data = node.nodeData
-        else:
-            instance_data = JSONNodetreeUtils.TreeEnsureInstanceForNode(node,treeOwner)
+                instance_data = JSONNodetreeUtils.TreeEnsureInstanceForNode(node,treeOwner)
 
         try:
             prop = eval("instance_data.%s" % propName)
