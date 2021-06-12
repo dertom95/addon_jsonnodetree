@@ -328,6 +328,9 @@ def createNodeTree(data):
     # Mix-in class for all custom nodes in this tree type.
     # Defines a poll function to enable instantiation.
     class MyCustomTreeNode:
+        nonlocal data
+
+        exposeDataSupported = "exposedata_supported" in data and data["exposedata_supported"]=="true"
         exposeData : bpy.props.BoolProperty(override={'LIBRARY_OVERRIDABLE'})
         #expose_parent :bpy.props.PointerProperty(type=bpy.types.Object)
 
@@ -439,7 +442,8 @@ def createNodeTree(data):
             def draw_buttons(self, context, layout):
                 row = layout.row()
                 row.label(text="Node settings")
-                row.prop(self,"exposeData",text="")
+                if self.exposeDataSupported:
+                    row.prop(self,"exposeData",text="")
 
                 try:
                     # here you have the chance to add additional buttons at the bottom
