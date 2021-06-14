@@ -55,6 +55,8 @@ def propValue(treeOwner,node,propName,collection_root):
     tree = node.id_data
     is_linked_tree = tree.library!=None and tree.library!=""
 
+    propType = node.propTypes[propName]
+
     if is_exposed_prop and treeOwner:
 #        instance_data = JSONNodetreeUtils.TreeEnsureInstanceForNode(node,treeOwner,False)
         instance_data = None
@@ -76,14 +78,19 @@ def propValue(treeOwner,node,propName,collection_root):
                 instance_data = JSONNodetreeUtils.TreeEnsureInstanceForNode(node,treeOwner)
 
         try:
-            prop = eval("instance_data.%s" % propName)
+            if propType=='string' and propName.endswith("_OBJ"):        
+               prop = eval("instance_data.%s" % propName).name            
+            else:
+               prop = eval("instance_data.%s" % propName)
         except:
             print("error in node:%s with propName:%s" %(node.name,propName))
             traceback.print_exc(file=sys.stdout)             
-    else:        
-        prop = eval("node.nodeData.%s" % propName)
+    else:
+        if propType=='string' and propName.endswith("_OBJ"):        
+            prop = eval("node.nodeData.%s" % propName).name
+        else:
+            prop = eval("node.nodeData.%s" % propName)
 
-    propType = node.propTypes[propName]
     if (propType in ["vector4","vector3","vector2","color"]):
         output="("
         arraySize = len(prop)
@@ -174,15 +181,21 @@ def exportNodes(treeOwner,nodetree,onlyValueDifferentFromDefault=False,collectio
                 print("Couldnt mapback:%s",propName)
                 mapBackName = propName[5:]
             
-            propertyDefault = eval("node.nodeData.bl_rna.properties['"+propName+"']").default
+            propertyDefault = None
+            try:
+                propertyDefault = eval("node.nodeData.bl_rna.properties['"+propName+"']").default
+            except:
+                print("node.nodeData.bl_rna.properties['%s'] has no default" % propName)
+                pass
             
             prop = { 
          #       "name" : propName[5:],
                 "name" : mapBackName,
                 "value" : propValue(treeOwner,node,propName,collection_root),
                 "type"  : node.propTypes[propName],
-                "default" : propertyDefault
             }
+            if propertyDefault:
+                prop["default"]=propertyDefault
 
             if onlyValueDifferentFromDefault:
                 try:
@@ -774,7 +787,11 @@ def createNodeTree(data):
                 #exec("NodeData.%s=bpy.props.FloatProperty(subtype='%s',name='%s',default=%s,description='%s',min=%s,max=%s,step=%s,unit='%s',precision=%s)" % ( name,subtype,label,default,description,mini,maxi,step,unit,precision ))
             elif type=="string":
                 default = prop.get("default","")
-                exec("NodeData.__annotations__['%s']=bpy.props.StringProperty(name='%s',default='%s',description='%s',update=updated_node_value,override={'LIBRARY_OVERRIDABLE'})" % ( name,label,default,description ))
+                if name.endswith("_OBJ"):
+                    #name=name.replace("_OBJ")
+                    exec("NodeData.__annotations__['%s']=bpy.props.PointerProperty(name='%s',type=bpy.types.Object,description='%s',update=updated_node_value,override={'LIBRARY_OVERRIDABLE'})" % ( name,label,description ))
+                else:
+                    exec("NodeData.__annotations__['%s']=bpy.props.StringProperty(name='%s',default='%s',description='%s',update=updated_node_value,override={'LIBRARY_OVERRIDABLE'})" % ( name,label,default,description ))
                 # exec("NodeData.%s=bpy.props.StringProperty(name='%s',default='%s',description='%s')" % ( name,label,default,description ))
             elif type=="bool":
                 default = prop.get("default","False")=="true"
