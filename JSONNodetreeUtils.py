@@ -155,6 +155,8 @@ def NodeHasExposedValues(node):
     return False
 
 def TreeCheckForExposedValues(tree):
+    if not tree:
+        return
     for node in tree.nodes:
         if NodeHasExposedValues(node):
             tree.has_exposed_values=True

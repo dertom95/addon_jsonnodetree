@@ -78,8 +78,15 @@ def propValue(treeOwner,node,propName,collection_root):
                 instance_data = JSONNodetreeUtils.TreeEnsureInstanceForNode(node,treeOwner)
 
         try:
-            if propType=='string' and propName.endswith("_OBJ"):        
-               prop = eval("instance_data.%s" % propName).name            
+            if propType=='string' and propName.endswith("_OBJ"):
+                prop = eval("instance_data.%s" % propName).name            
+            elif propType=='bool':
+                prop = eval("instance_data.%s" % propName)
+                if prop:
+                    prop = "true"
+                else:
+                    prop = "false"
+                
             else:
                prop = eval("instance_data.%s" % propName)
         except:
@@ -87,7 +94,16 @@ def propValue(treeOwner,node,propName,collection_root):
             traceback.print_exc(file=sys.stdout)             
     else:
         if propType=='string' and propName.endswith("_OBJ"):        
-            prop = eval("node.nodeData.%s" % propName).name
+            obj = eval("node.nodeData.%s" % propName)
+            prop = ""
+            if obj:
+                prop.name = obj.name
+        elif propType=='bool':
+            prop = eval("node.nodeData.%s" % propName)
+            if prop:
+                prop = "true"
+            else:
+                prop = "false"
         else:
             prop = eval("node.nodeData.%s" % propName)
 
