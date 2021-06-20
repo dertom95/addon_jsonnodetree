@@ -511,7 +511,6 @@ def json_nodetree_register():
     #bpy.types.Object.nodetreeId = bpy.props.IntProperty(default=-1)
     bpy.types.NodeTree.id = bpy.props.IntProperty(default=-1)
 
-
     bpy.types.Object.id = bpy.props.IntProperty(default=-1)
 #    bpy.types.Texture.id = bpy.props.IntProperty(default=-1)
     bpy.types.Image.id = bpy.props.IntProperty(default=-1)

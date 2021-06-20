@@ -180,11 +180,14 @@ def exportNodes(treeOwner,nodetree,onlyValueDifferentFromDefault=False,collectio
             "name"  :   node.name,
             "props" :   [],
             "inputsockets" : [],
-            "outputsockets" : []
+            "outputsockets" : [],
+            "is_replicated" : node.is_replicated
         }
         nodeCache[node]=dictNode
         id=id+1
         exportNodes.append(dictNode)
+
+
 
         props = dictNode["props"]
 
@@ -361,6 +364,8 @@ def createNodeTree(data):
 
         exposeDataSupported = "exposedata_supported" in data and data["exposedata_supported"]=="true"
         exposeData : bpy.props.BoolProperty(override={'LIBRARY_OVERRIDABLE'})
+        is_replicated : bpy.props.BoolProperty(override={'LIBRARY_OVERRIDABLE'})
+
         #expose_parent :bpy.props.PointerProperty(type=bpy.types.Object)
 
         @classmethod
@@ -472,6 +477,12 @@ def createNodeTree(data):
                 row = layout.row()
                 row.label(text="Node settings")
                 if self.exposeDataSupported:
+                    icon = "EVENT_R"
+                    text = "REPLICATED"
+                    if not self.is_replicated:
+                        icon = "EVENT_L"
+                        text = "LOCAL"
+                    row.prop(self,"is_replicated",text=text,icon=icon)
                     row.prop(self,"exposeData",text="")
 
                 try:

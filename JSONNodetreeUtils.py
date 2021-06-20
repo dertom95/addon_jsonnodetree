@@ -210,6 +210,8 @@ def DuplicateObject(orig_obj):
 def TreeEnsureInstanceForNode(node,obj,create=True):
     # iterate over instance data and check if there is an instance for this obj already
     data = None
+    if not hasattr(node,"instance_data"):
+        return None
 
     for inst_data in node.instance_data:
         if inst_data and inst_data.instance_object==obj:
