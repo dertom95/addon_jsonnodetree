@@ -168,6 +168,7 @@ def exportNodes(treeOwner,nodetree,onlyValueDifferentFromDefault=False,collectio
     id = 0
     # first pass create the nodes
     for node in nodetree.nodes:
+        is_dot_net = False
         if (node.bl_idname=="NodeReroute"):
             # ignore reroute node (this things that separate connections)
             continue
@@ -181,8 +182,15 @@ def exportNodes(treeOwner,nodetree,onlyValueDifferentFromDefault=False,collectio
             "props" :   [],
             "inputsockets" : [],
             "outputsockets" : [],
-            "is_replicated" : node.is_replicated
+            "is_replicated" : node.is_replicated,
+            "dotnetType" : None
         }
+        try:
+            dictNode["dotnetType"] = node.customData["data"].get("dotnetType",None)
+            is_dot_net = dictNode["dotnetType"] != None
+        except:
+            pass
+
         nodeCache[node]=dictNode
         id=id+1
         exportNodes.append(dictNode)
@@ -216,7 +224,7 @@ def exportNodes(treeOwner,nodetree,onlyValueDifferentFromDefault=False,collectio
             if propertyDefault:
                 prop["default"]=propertyDefault
 
-            if onlyValueDifferentFromDefault:
+            if onlyValueDifferentFromDefault and not is_dot_net:
                 try:
                     print("node.nodeData.bl_rna.properties['"+propName+"'].default")
                     
@@ -396,7 +404,7 @@ def createNodeTree(data):
             __annotations__={
                 "instance_object" : bpy.props.PointerProperty(type=bpy.types.Object,override={'LIBRARY_OVERRIDABLE'}),
                 "instance_tree"   : bpy.props.PointerProperty(type=bpy.types.NodeTree,override={'LIBRARY_OVERRIDABLE'}),
-                "collection_signature" : bpy.props.StringProperty(override={'LIBRARY_OVERRIDABLE'})    
+                "collection_signature" : bpy.props.StringProperty(override={'LIBRARY_OVERRIDABLE'}) 
             }
 
         #bpy.utils.register_class(NodeData)
@@ -412,21 +420,24 @@ def createNodeTree(data):
             # Icon identifier
             bl_icon = data.get("icon","SOUND")
 
-
             # === Custom Properties ===
             # These work just like custom properties in ID data blocks
             # Extensive information can be found under
             # http://wiki.blender.org/index.php/Doc:2.6/Manual/Extensions/Python/Properties
             propNames=[]
             propTypes={} # propName=>type(string)
-            customData={}
+            customData={"dotType":data.get("dotnetType",""),"data":data}
             # for some reason all type I get from node2.bl_rna.properties['prop'] is FloatProperty....a bug? For now keep a separate dict for all defaultValues
 
             defaultValues ={}
             # TODO: do I need this? I have the name as it was exported already in the label!?
             propNameMapping={} # map property-conformont name with original name (e.g. 'Occlusion_Culling' =>  'Occluision Culling')
+            propMapping={}
 
-            __annotations__={}
+
+            __annotations__={
+                "dotnetType"      : bpy.props.StringProperty()   
+            }
 
             nodeData : bpy.props.PointerProperty(type=NodeData,override={'LIBRARY_OVERRIDABLE'})             # the default property view
             instance_data : bpy.props.CollectionProperty(type=NodeData,override={'LIBRARY_OVERRIDABLE'})     # values of objects using the nodetree but overriding values
@@ -438,6 +449,8 @@ def createNodeTree(data):
             # NOTE: this is not the same as the standard __init__ function in Python, which is
             #       a purely internal Python method and unknown to the node system!
             def init(self, context):
+                __annotations__["dotnetType"] = data.get("dotnetType","")
+
                 for insock in data.get("inputsockets",[]):
                     name = insock.get("name","noname")
                     type = insock.get("type","float")
@@ -623,6 +636,7 @@ def createNodeTree(data):
             InnerCustomNode.propNames.append(name)
             InnerCustomNode.propTypes[name]=type
             InnerCustomNode.propNameMapping[name]=prop["name"]
+            InnerCustomNode.propMapping[name]=prop
 
             def check_for_exposed_data(self,context):
                 nonlocal name, in_process
