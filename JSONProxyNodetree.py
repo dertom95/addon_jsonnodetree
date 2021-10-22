@@ -433,7 +433,7 @@ def CreateProxyNodetree():
     proxy_tree = bpy.data.node_groups[proxy_nodetree_name]
 
     for col in bpy.data.collections:
-        if not col.library or not col.urhoExport:
+        if not col.library and not col.urhoExport:
             continue
         collectionNodeClz = CreateNodeForCollection(col)
         node_id = "collectionnode_%s"%col.name
