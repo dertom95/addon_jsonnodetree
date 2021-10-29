@@ -107,7 +107,7 @@ def propValue(treeOwner,node,propName,collection_root):
         else:
             prop = eval("node.nodeData.%s" % propName)
 
-    if (propType in ["vector4","vector3","vector2","color"]):
+    if (propType in ["vector4","vector3","vector2","color","intvector2","intvector3"]):
         output="("
         arraySize = len(prop)
         for idx in range(arraySize):
@@ -851,6 +851,10 @@ def createNodeTree(data):
                 exeStr = "NodeData.__annotations__['%s']=bpy.props.IntProperty(subtype='%s',name='%s',default=%s,description='%s',min=%s,max=%s,step=%s,update=updated_node_value,override={'LIBRARY_OVERRIDABLE'})" % ( name,subtype,label,default,description,mini,maxi,step )
                 # exeStr = "NodeData.%s=bpy.props.IntProperty(subtype='%s',name='%s',default=%s,description='%s',min=%s,max=%s,step=%s)" % ( name,subtype,label,default,description,mini,maxi,step )
                 exec(exeStr)
+            elif type=="intvector2":
+                default = prop.get("default",(0,0));
+                exec("NodeData.__annotations__['%s']=bpy.props.IntVectorProperty(name='%s',default=%s,size=2,description='%s',update=updated_node_value,override={'LIBRARY_OVERRIDABLE'})" % ( name,label,default,description ))
+                # exec("NodeData.%s=bpy.props.FloatVectorProperty(name='%s',default=%s,size=2,description='%s')" % ( name,label,default,description ))
             elif type=="vector2":
                 default = prop.get("default",(0.0,0.0));
                 exec("NodeData.__annotations__['%s']=bpy.props.FloatVectorProperty(name='%s',default=%s,size=2,description='%s',update=updated_node_value,override={'LIBRARY_OVERRIDABLE'})" % ( name,label,default,description ))
