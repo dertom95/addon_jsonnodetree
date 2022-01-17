@@ -449,7 +449,7 @@ def createNodeTree(data):
             # NOTE: this is not the same as the standard __init__ function in Python, which is
             #       a purely internal Python method and unknown to the node system!
             def init(self, context):
-                __annotations__["dotnetType"] = data.get("dotnetType","")
+                self.__annotations__["dotnetType"] = data.get("dotnetType","")
 
                 for insock in data.get("inputsockets",[]):
                     name = insock.get("name","noname")
