@@ -271,10 +271,12 @@ def TreeRemoveInstanceFromTree(tree,obj,force=True):
         TreeRemoveInstanceFromNode(node,obj)
 
 def TreeHasInstanceForObject(tree,obj):
-    for inst in tree.instances:
-        if inst.instance_object and inst.instance_object==obj:
-            return True
-
+    try:
+        for inst in tree.instances:
+            if inst.instance_object and inst.instance_object==obj:
+                return True
+    except:
+        pass
     return False
 
 def TreeResetValueForInstanceProperty(tree,obj,param_name,search_expose_name,collection_signature=None):
@@ -362,23 +364,26 @@ def TreeUpdateExposedNames(tree,update_prop_name=""):
 
 def CheckAllObjectNodetreeInstances():
     for tree in bpy.data.node_groups:
-        for idx in range(len(tree.instances)-1, -1, -1):
-            inst = tree.instances[idx]
-            obj = inst.instance_object
-            if (not obj):
-                continue
-            
-            found = False
-            for treeinfo in obj.nodetrees:
-                _tree = treeinfo.nodetreePointer
-                if not _tree:
+        try:
+            for idx in range(len(tree.instances)-1, -1, -1):
+                inst = tree.instances[idx]
+                obj = inst.instance_object
+                if (not obj):
                     continue
-                if _tree == tree:
-                    found = True
-                    break
-            
-            if not found:
-                tree.instances.remove(idx)
+                
+                found = False
+                for treeinfo in obj.nodetrees:
+                    _tree = treeinfo.nodetreePointer
+                    if not _tree:
+                        continue
+                    if _tree == tree:
+                        found = True
+                        break
+                
+                if not found:
+                    tree.instances.remove(idx)
+        except:
+            print("Tree:%s has no instance" % tree.name)
 
 
 
